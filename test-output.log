@@ -1,0 +1,111 @@
+
+Running 3 tests using 1 worker
+
+  ✘  1 [iPhone 14 Pro] › tests/test-form-field-visibility.spec.ts:5:7 › Form Field Visibility Test › should show highlighted form fields on W9 PDF (12.6s)
+  ✘  2 [iPhone 14] › tests/test-form-field-visibility.spec.ts:5:7 › Form Field Visibility Test › should show highlighted form fields on W9 PDF (10.4s)
+  ✘  3 [iPad Pro 11] › tests/test-form-field-visibility.spec.ts:5:7 › Form Field Visibility Test › should show highlighted form fields on W9 PDF (10.4s)
+
+
+  1) [iPhone 14 Pro] › tests/test-form-field-visibility.spec.ts:5:7 › Form Field Visibility Test › should show highlighted form fields on W9 PDF 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('text=Edit PDFs with ease')
+    Expected: visible
+    Timeout: 10000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 10000ms[22m
+    [2m  - waiting for locator('text=Edit PDFs with ease')[22m
+
+
+       8 |
+       9 |     // Wait for the home page to load
+    > 10 |     await expect(page.locator('text=Edit PDFs with ease')).toBeVisible({ timeout: 10000 });
+         |                                                            ^
+      11 |
+      12 |     // Get the file input and upload the W9 PDF
+      13 |     const fileInput = page.locator('input[type="file"]');
+        at /Users/rioallen/Documents/DropFly-OS-App-Builder/DropFly-PROJECTS/pdf-editor/tests/test-form-field-visibility.spec.ts:10:60
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/test-form-field-visibility-5318a-ghted-form-fields-on-W9-PDF-iPhone-14-Pro/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/test-form-field-visibility-5318a-ghted-form-fields-on-W9-PDF-iPhone-14-Pro/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/test-form-field-visibility-5318a-ghted-form-fields-on-W9-PDF-iPhone-14-Pro/error-context.md
+
+  2) [iPhone 14] › tests/test-form-field-visibility.spec.ts:5:7 › Form Field Visibility Test › should show highlighted form fields on W9 PDF 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('text=Edit PDFs with ease')
+    Expected: visible
+    Timeout: 10000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 10000ms[22m
+    [2m  - waiting for locator('text=Edit PDFs with ease')[22m
+
+
+       8 |
+       9 |     // Wait for the home page to load
+    > 10 |     await expect(page.locator('text=Edit PDFs with ease')).toBeVisible({ timeout: 10000 });
+         |                                                            ^
+      11 |
+      12 |     // Get the file input and upload the W9 PDF
+      13 |     const fileInput = page.locator('input[type="file"]');
+        at /Users/rioallen/Documents/DropFly-OS-App-Builder/DropFly-PROJECTS/pdf-editor/tests/test-form-field-visibility.spec.ts:10:60
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/test-form-field-visibility-5318a-ghted-form-fields-on-W9-PDF-iPhone-14/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/test-form-field-visibility-5318a-ghted-form-fields-on-W9-PDF-iPhone-14/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/test-form-field-visibility-5318a-ghted-form-fields-on-W9-PDF-iPhone-14/error-context.md
+
+  3) [iPad Pro 11] › tests/test-form-field-visibility.spec.ts:5:7 › Form Field Visibility Test › should show highlighted form fields on W9 PDF 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('text=Edit PDFs with ease')
+    Expected: visible
+    Timeout: 10000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 10000ms[22m
+    [2m  - waiting for locator('text=Edit PDFs with ease')[22m
+
+
+       8 |
+       9 |     // Wait for the home page to load
+    > 10 |     await expect(page.locator('text=Edit PDFs with ease')).toBeVisible({ timeout: 10000 });
+         |                                                            ^
+      11 |
+      12 |     // Get the file input and upload the W9 PDF
+      13 |     const fileInput = page.locator('input[type="file"]');
+        at /Users/rioallen/Documents/DropFly-OS-App-Builder/DropFly-PROJECTS/pdf-editor/tests/test-form-field-visibility.spec.ts:10:60
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/test-form-field-visibility-5318a-ghted-form-fields-on-W9-PDF-iPad-Pro-11/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/test-form-field-visibility-5318a-ghted-form-fields-on-W9-PDF-iPad-Pro-11/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/test-form-field-visibility-5318a-ghted-form-fields-on-W9-PDF-iPad-Pro-11/error-context.md
+
+  3 failed
+    [iPhone 14 Pro] › tests/test-form-field-visibility.spec.ts:5:7 › Form Field Visibility Test › should show highlighted form fields on W9 PDF 
+    [iPhone 14] › tests/test-form-field-visibility.spec.ts:5:7 › Form Field Visibility Test › should show highlighted form fields on W9 PDF 
+    [iPad Pro 11] › tests/test-form-field-visibility.spec.ts:5:7 › Form Field Visibility Test › should show highlighted form fields on W9 PDF 

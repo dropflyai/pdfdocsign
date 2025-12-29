@@ -1,0 +1,493 @@
+
+Running 1 test using 1 worker
+
+
+================================================
+🧪 Starting Automated Field Detection Test
+================================================
+
+1️⃣  Navigating to app...
+[BROWSER] %c%s%c  ⚠ Unsupported metadata viewport is configured in metadata export in /. Please move it to viewport export instead.
+Read more: https://nextjs.org/docs/app/api-reference/functions/generate-viewport background: #e6e6e6;background: light-dark(rgba(0,0,0,0.1), rgba(255,255,255,0.25));color: #000000;color: light-dark(#000000, #ffffff);border-radius: 2px  Server  
+   ✓ Page loaded
+
+📸 Screenshot: 01-home-page.png
+
+2️⃣  Locating file input...
+   ✓ File input found
+
+3️⃣  Uploading W9 PDF...
+   📁 File path: /Users/rioallen/Documents/DropFly-OS-App-Builder/DropFly-PROJECTS/pdf-editor/public/test-w9.pdf
+[BROWSER] 📄 File selected: test-w9.pdf 140815 application/pdf
+[BROWSER] 🔄 Reading file as ArrayBuffer...
+   ✓ File uploaded
+
+4️⃣  Waiting for PDF editor to load...
+[BROWSER] ✅ ArrayBuffer read successfully, size: 140815
+[BROWSER] ✅ File processed successfully
+[BROWSER] 🔧 PDF.js version: 5.3.93
+[BROWSER] 🔧 Setting worker source for iOS compatibility
+[BROWSER] 🔧 Worker source set to: https://unpkg.com/pdfjs-dist@5.3.93/build/pdf.worker.min.mjs
+[BROWSER] Annotations updated: []
+[BROWSER] Annotations updated: []
+[BROWSER] ✅ PDF loaded successfully, pages: 6
+[BROWSER] 📄 onDocumentLoadSuccess called, numPages: 6
+[BROWSER] 🔍 Starting field extraction...
+[BROWSER] === STARTING FORM FIELD EXTRACTION ===
+[BROWSER] 📱 Platform: Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Mobile/15E148 Safari/604.1
+[BROWSER] 📁 File: test-w9.pdf Size: 140815 Type: application/pdf
+[BROWSER] 📖 Reading file arrayBuffer...
+[BROWSER] ✅ PDF loaded, size: 140815 bytes
+[BROWSER] 📖 Loading PDFDocument with pdf-lib...
+[BROWSER] 📏 PDF fit width: 329 Container: 329
+[BROWSER] ✅ PDFDocument loaded successfully
+[BROWSER] 📋 Getting form from PDFDocument...
+[BROWSER] Removing XFA form data as pdf-lib does not support reading or writing XFA
+[BROWSER] ✅ Form object retrieved: exists
+[BROWSER] 🔍 Getting form fields...
+[BROWSER] ✅ Total fields found: 23
+[BROWSER] Processing field: topmostSubform[0].Page1[0].f1_01[0]
+[BROWSER]   Field type: PDFTextField
+[BROWSER]   Widgets found: 1
+[BROWSER]   Rectangle: {x: 58.6, y: 659.967, width: 517.4, height: 14}
+[BROWSER]   Page index: 0
+[BROWSER]   ✓ Field extracted successfully
+[BROWSER] Processing field: topmostSubform[0].Page1[0].f1_02[0]
+[BROWSER]   Field type: PDFTextField
+[BROWSER]   Widgets found: 1
+[BROWSER]   Rectangle: {x: 58.6, y: 635.966, width: 517.4, height: 14.000999999999976}
+[BROWSER]   Page index: 0
+[BROWSER]   ✓ Field extracted successfully
+[BROWSER] Processing field: topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].c1_1[0]
+[BROWSER]   Field type: PDFCheckBox
+[BROWSER]   Widgets found: 1
+[BROWSER]   Rectangle: {x: 73, y: 603.719, width: 8, height: 8}
+[BROWSER]   Page index: 0
+[BROWSER]   ✓ Field extracted successfully
+[BROWSER] Processing field: topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].c1_1[1]
+[BROWSER]   Field type: PDFCheckBox
+[BROWSER]   Widgets found: 1
+[BROWSER]   Rectangle: {x: 180, y: 603.719, width: 8, height: 8}
+[BROWSER]   Page index: 0
+[BROWSER]   ✓ Field extracted successfully
+[BROWSER] Processing field: topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].c1_1[2]
+[BROWSER]   Field type: PDFCheckBox
+[BROWSER]   Widgets found: 1
+[BROWSER]   Rectangle: {x: 252, y: 603.719, width: 8, height: 8}
+[BROWSER]   Page index: 0
+[BROWSER]   ✓ Field extracted successfully
+[BROWSER] Processing field: topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].c1_1[3]
+[BROWSER]   Field type: PDFCheckBox
+[BROWSER]   Widgets found: 1
+[BROWSER]   Rectangle: {x: 324, y: 603.719, width: 8, height: 8}
+[BROWSER]   Page index: 0
+[BROWSER]   ✓ Field extracted successfully
+[BROWSER] Processing field: topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].c1_1[4]
+[BROWSER]   Field type: PDFCheckBox
+[BROWSER]   Widgets found: 1
+[BROWSER]   Rectangle: {x: 388.8, y: 603.719, width: 8, height: 8}
+[BROWSER]   Page index: 0
+[BROWSER]   ✓ Field extracted successfully
+[BROWSER] Processing field: topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].c1_1[5]
+[BROWSER]   Field type: PDFCheckBox
+[BROWSER]   Widgets found: 1
+[BROWSER]   Rectangle: {x: 72.999, y: 590.47, width: 8, height: 8}
+[BROWSER]   Page index: 0
+[BROWSER]   ✓ Field extracted successfully
+[BROWSER] Processing field: topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].f1_03[0]
+[BROWSER]   Field type: PDFTextField
+[BROWSER]   Widgets found: 1
+[BROWSER]   Rectangle: {x: 417.6, y: 588.97, width: 28.799999999999955, height: 10.999000000000024}
+[BROWSER]   Page index: 0
+[BROWSER]   ✓ Field extracted successfully
+[BROWSER] Processing field: topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].c1_1[6]
+[BROWSER]   Field type: PDFCheckBox
+[BROWSER]   Widgets found: 1
+[BROWSER]   Rectangle: {x: 72.999, y: 553.97, width: 8, height: 8}
+[BROWSER]   Page index: 0
+[BROWSER]   ✓ Field extracted successfully
+[BROWSER] Processing field: topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].f1_04[0]
+[BROWSER]   Field type: PDFTextField
+[BROWSER]   Widgets found: 1
+[BROWSER]   Rectangle: {x: 162.4, y: 551.97, width: 284, height: 11.999000000000024}
+[BROWSER]   Page index: 0
+[BROWSER]   ✓ Field extracted successfully
+[BROWSER] Processing field: topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].c1_2[0]
+[BROWSER]   Field type: PDFCheckBox
+[BROWSER]   Widgets found: 1
+[BROWSER]   Rectangle: {x: 440.6, y: 520.971, width: 8, height: 8}
+[BROWSER]   Page index: 0
+[BROWSER]   ✓ Field extracted successfully
+[BROWSER] Processing field: topmostSubform[0].Page1[0].f1_05[0]
+[BROWSER]   Field type: PDFTextField
+[BROWSER]   Widgets found: 1
+[BROWSER]   Rectangle: {x: 543.6, y: 587.97, width: 32.39999999999998, height: 11.999000000000024}
+[BROWSER]   Page index: 0
+[BROWSER]   ✓ Field extracted successfully
+[BROWSER] Processing field: topmostSubform[0].Page1[0].f1_06[0]
+[BROWSER]   Field type: PDFTextField
+[BROWSER]   Widgets found: 1
+[BROWSER]   Rectangle: {x: 500.6, y: 551.97, width: 75.39999999999998, height: 11.999000000000024}
+[BROWSER]   Page index: 0
+[BROWSER]   ✓ Field extracted successfully
+[BROWSER] Processing field: topmostSubform[0].Page1[0].Address_ReadOrder[0].f1_07[0]
+[BROWSER]   Field type: PDFTextField
+[BROWSER]   Widgets found: 1
+[BROWSER]   Rectangle: {x: 58.6, y: 491.966, width: 329.45, height: 14.000999999999976}
+[BROWSER]   Page index: 0
+[BROWSER]   ✓ Field extracted successfully
+[BROWSER] Processing field: topmostSubform[0].Page1[0].Address_ReadOrder[0].f1_08[0]
+[BROWSER]   Field type: PDFTextField
+[BROWSER]   Widgets found: 1
+[BROWSER]   Rectangle: {x: 58.6, y: 467.968, width: 329.45, height: 14.000999999999976}
+[BROWSER]   Page index: 0
+[BROWSER]   ✓ Field extracted successfully
+[BROWSER] Processing field: topmostSubform[0].Page1[0].f1_09[0]
+[BROWSER]   Field type: PDFTextField
+[BROWSER]   Widgets found: 1
+[BROWSER]   Rectangle: {x: 389.8, y: 467.968, width: 186.2, height: 37.99899999999997}
+[BROWSER]   Page index: 0
+[BROWSER]   ✓ Field extracted successfully
+[BROWSER] Processing field: topmostSubform[0].Page1[0].f1_10[0]
+[BROWSER]   Field type: PDFTextField
+[BROWSER]   Widgets found: 1
+[BROWSER]   Rectangle: {x: 58.6, y: 443.967, width: 517.4, height: 14.001000000000033}
+[BROWSER]   Page index: 0
+[BROWSER]   ✓ Field extracted successfully
+[BROWSER] Processing field: topmostSubform[0].Page1[0].f1_11[0]
+[BROWSER]   Field type: PDFTextField
+[BROWSER]   Widgets found: 1
+[BROWSER]   Rectangle: {x: 417.6, y: 395.968, width: 43.19999999999999, height: 24.000999999999976}
+[BROWSER]   Page index: 0
+[BROWSER]   ✓ Field extracted successfully
+[BROWSER] Processing field: topmostSubform[0].Page1[0].f1_12[0]
+[BROWSER]   Field type: PDFTextField
+[BROWSER]   Widgets found: 1
+[BROWSER]   Rectangle: {x: 475.2, y: 395.968, width: 28.80000000000001, height: 24.000999999999976}
+[BROWSER]   Page index: 0
+[BROWSER]   ✓ Field extracted successfully
+[BROWSER] Processing field: topmostSubform[0].Page1[0].f1_13[0]
+[BROWSER]   Field type: PDFTextField
+[BROWSER]   Widgets found: 1
+[BROWSER]   Rectangle: {x: 518.4, y: 395.968, width: 57.60000000000002, height: 24.000999999999976}
+[BROWSER]   Page index: 0
+[BROWSER]   ✓ Field extracted successfully
+[BROWSER] Processing field: topmostSubform[0].Page1[0].f1_14[0]
+[BROWSER]   Field type: PDFTextField
+[BROWSER]   Widgets found: 1
+[BROWSER]   Rectangle: {x: 417.6, y: 347.966, width: 28.799999999999955, height: 24.000999999999976}
+[BROWSER]   Page index: 0
+[BROWSER]   ✓ Field extracted successfully
+[BROWSER] Processing field: topmostSubform[0].Page1[0].f1_15[0]
+[BROWSER]   Field type: PDFTextField
+[BROWSER]   Widgets found: 1
+[BROWSER]   Rectangle: {x: 460.8, y: 347.966, width: 100.80000000000001, height: 24.000999999999976}
+[BROWSER]   Page index: 0
+[BROWSER]   ✓ Field extracted successfully
+[BROWSER] === EXTRACTION COMPLETE ===
+[BROWSER] Total fields extracted: 23
+[BROWSER] Extracted form fields: [Object, Object, Object, Object, Object, Object, Object, Object, Object, Object]
+[BROWSER] Converting fields to annotations...
+[BROWSER] === CONVERTING FORM FIELDS TO ANNOTATIONS ===
+[BROWSER] 📊 Fields to convert: 23
+[BROWSER] 📖 Loading PDF for coordinate conversion...
+[BROWSER] ✅ Total pages: 6
+[BROWSER] 📋 Detected form type: FW9
+[BROWSER] Converting field "topmostSubform[0].Page1[0].f1_01[0]": {type: text, rect: undefined, pageNumber: 1, pageIndex: 0}
+[BROWSER]   No config for field: topmostSubform[0].Page1[0].f1_01[0], checking heuristics...
+[BROWSER]   Extracting visual boxes from page 1...
+[BROWSER] ✅ Page rendered: PDFPageProxy
+[BROWSER]   Found 0 visual rectangles on page
+[BROWSER]   Created single annotation: {id: formfield-topmostSubform[0].Page1[0].f1_01[0]-1764640910208, type: formfield, x: 58.6, y: 111.00099999999998, width: 517.4}
+[BROWSER] Converting field "topmostSubform[0].Page1[0].f1_02[0]": {type: text, rect: undefined, pageNumber: 1, pageIndex: 0}
+[BROWSER]   No config for field: topmostSubform[0].Page1[0].f1_02[0], checking heuristics...
+[BROWSER]   Created single annotation: {id: formfield-topmostSubform[0].Page1[0].f1_02[0]-1764640910208, type: formfield, x: 58.6, y: 135.0005, width: 517.4}
+[BROWSER] Converting field "topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].c1_1[0]": {type: checkbox, rect: undefined, pageNumber: 1, pageIndex: 0}
+[BROWSER]   Created annotation: {id: formfield-topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].c1_1[0]-1764640910209, type: formfield, x: 73, y: 180.2489999999999, width: 8}
+[BROWSER] Converting field "topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].c1_1[1]": {type: checkbox, rect: undefined, pageNumber: 1, pageIndex: 0}
+[BROWSER]   Created annotation: {id: formfield-topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].c1_1[1]-1764640910209, type: formfield, x: 180, y: 180.2489999999999, width: 8}
+[BROWSER] Converting field "topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].c1_1[2]": {type: checkbox, rect: undefined, pageNumber: 1, pageIndex: 0}
+[BROWSER]   Created annotation: {id: formfield-topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].c1_1[2]-1764640910209, type: formfield, x: 252, y: 180.2489999999999, width: 8}
+[BROWSER] Converting field "topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].c1_1[3]": {type: checkbox, rect: undefined, pageNumber: 1, pageIndex: 0}
+[BROWSER]   Created annotation: {id: formfield-topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].c1_1[3]-1764640910209, type: formfield, x: 324, y: 180.2489999999999, width: 8}
+[BROWSER] Converting field "topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].c1_1[4]": {type: checkbox, rect: undefined, pageNumber: 1, pageIndex: 0}
+[BROWSER]   Created annotation: {id: formfield-topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].c1_1[4]-1764640910209, type: formfield, x: 388.8, y: 180.2489999999999, width: 8}
+[BROWSER] Converting field "topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].c1_1[5]": {type: checkbox, rect: undefined, pageNumber: 1, pageIndex: 0}
+[BROWSER]   Created annotation: {id: formfield-topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].c1_1[5]-1764640910209, type: formfield, x: 72.999, y: 193.49799999999993, width: 8}
+[BROWSER] Converting field "topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].f1_03[0]": {type: text, rect: undefined, pageNumber: 1, pageIndex: 0}
+[BROWSER]   No config for field: topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].f1_03[0], checking heuristics...
+[BROWSER]   Created single annotation: {id: formfield-topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].f1_03[0]-1764640910209, type: formfield, x: 417.6, y: 186.4994999999999, width: 28.799999999999955}
+[BROWSER] Converting field "topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].c1_1[6]": {type: checkbox, rect: undefined, pageNumber: 1, pageIndex: 0}
+[BROWSER]   Created annotation: {id: formfield-topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].c1_1[6]-1764640910209, type: formfield, x: 72.999, y: 229.99799999999993, width: 8}
+[BROWSER] Converting field "topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].f1_04[0]": {type: text, rect: undefined, pageNumber: 1, pageIndex: 0}
+[BROWSER]   No config for field: topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].f1_04[0], checking heuristics...
+[BROWSER]   Created single annotation: {id: formfield-topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].f1_04[0]-1764640910209, type: formfield, x: 162.4, y: 221.9994999999999, width: 284}
+[BROWSER] Converting field "topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].c1_2[0]": {type: checkbox, rect: undefined, pageNumber: 1, pageIndex: 0}
+[BROWSER]   Created annotation: {id: formfield-topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].c1_2[0]-1764640910209, type: formfield, x: 440.6, y: 262.99699999999996, width: 8}
+[BROWSER] Converting field "topmostSubform[0].Page1[0].f1_05[0]": {type: text, rect: undefined, pageNumber: 1, pageIndex: 0}
+[BROWSER]   No config for field: topmostSubform[0].Page1[0].f1_05[0], checking heuristics...
+[BROWSER]   Created single annotation: {id: formfield-topmostSubform[0].Page1[0].f1_05[0]-1764640910209, type: formfield, x: 543.6, y: 185.9994999999999, width: 32.39999999999998}
+[BROWSER] Converting field "topmostSubform[0].Page1[0].f1_06[0]": {type: text, rect: undefined, pageNumber: 1, pageIndex: 0}
+[BROWSER]   No config for field: topmostSubform[0].Page1[0].f1_06[0], checking heuristics...
+[BROWSER]   Created single annotation: {id: formfield-topmostSubform[0].Page1[0].f1_06[0]-1764640910209, type: formfield, x: 500.6, y: 221.9994999999999, width: 75.39999999999998}
+[BROWSER] Converting field "topmostSubform[0].Page1[0].Address_ReadOrder[0].f1_07[0]": {type: text, rect: undefined, pageNumber: 1, pageIndex: 0}
+[BROWSER]   No config for field: topmostSubform[0].Page1[0].Address_ReadOrder[0].f1_07[0], checking heuristics...
+[BROWSER]   Created single annotation: {id: formfield-topmostSubform[0].Page1[0].Address_ReadOrder[0].f1_07[0]-1764640910210, type: formfield, x: 58.6, y: 279.0005, width: 329.45}
+[BROWSER] Converting field "topmostSubform[0].Page1[0].Address_ReadOrder[0].f1_08[0]": {type: text, rect: undefined, pageNumber: 1, pageIndex: 0}
+[BROWSER]   No config for field: topmostSubform[0].Page1[0].Address_ReadOrder[0].f1_08[0], checking heuristics...
+[BROWSER]   Created single annotation: {id: formfield-topmostSubform[0].Page1[0].Address_ReadOrder[0].f1_08[0]-1764640910210, type: formfield, x: 58.6, y: 302.9985, width: 329.45}
+[BROWSER] Converting field "topmostSubform[0].Page1[0].f1_09[0]": {type: text, rect: undefined, pageNumber: 1, pageIndex: 0}
+[BROWSER]   No config for field: topmostSubform[0].Page1[0].f1_09[0], checking heuristics...
+[BROWSER]   Created single annotation: {id: formfield-topmostSubform[0].Page1[0].f1_09[0]-1764640910210, type: formfield, x: 389.8, y: 286.001, width: 186.2}
+[BROWSER] Converting field "topmostSubform[0].Page1[0].f1_10[0]": {type: text, rect: undefined, pageNumber: 1, pageIndex: 0}
+[BROWSER]   No config for field: topmostSubform[0].Page1[0].f1_10[0], checking heuristics...
+[BROWSER]   Created single annotation: {id: formfield-topmostSubform[0].Page1[0].f1_10[0]-1764640910210, type: formfield, x: 58.6, y: 326.9994999999999, width: 517.4}
+[BROWSER] Converting field "topmostSubform[0].Page1[0].f1_11[0]": {type: text, rect: undefined, pageNumber: 1, pageIndex: 0}
+[BROWSER]   ✓ Using configured split: 3 boxes for field: topmostSubform[0].Page1[0].f1_11[0]
+[BROWSER]   Creating 3 evenly-spaced boxes
+[BROWSER] Converting field "topmostSubform[0].Page1[0].f1_12[0]": {type: text, rect: undefined, pageNumber: 1, pageIndex: 0}
+[BROWSER]   ✓ Using configured split: 2 boxes for field: topmostSubform[0].Page1[0].f1_12[0]
+[BROWSER]   Creating 2 evenly-spaced boxes
+[BROWSER] Converting field "topmostSubform[0].Page1[0].f1_13[0]": {type: text, rect: undefined, pageNumber: 1, pageIndex: 0}
+[BROWSER]   ✓ Using configured split: 4 boxes for field: topmostSubform[0].Page1[0].f1_13[0]
+[BROWSER]   Creating 4 evenly-spaced boxes
+[BROWSER] Converting field "topmostSubform[0].Page1[0].f1_14[0]": {type: text, rect: undefined, pageNumber: 1, pageIndex: 0}
+[BROWSER]   ✓ Using configured split: 2 boxes for field: topmostSubform[0].Page1[0].f1_14[0]
+[BROWSER]   Creating 2 evenly-spaced boxes
+[BROWSER] Converting field "topmostSubform[0].Page1[0].f1_15[0]": {type: text, rect: undefined, pageNumber: 1, pageIndex: 0}
+[BROWSER]   ✓ Using configured split: 7 boxes for field: topmostSubform[0].Page1[0].f1_15[0]
+[BROWSER]   Creating 7 evenly-spaced boxes
+[BROWSER] === CONVERSION COMPLETE ===
+[BROWSER] ✅ Total annotations created: 36
+[BROWSER] 📋 Annotations details: [Object, Object, Object, Object, Object, Object, Object, Object, Object, Object]
+[BROWSER] 📊 Annotation types: {text: 28, checkbox: 8}
+[BROWSER] 💾 Setting annotations state...
+[BROWSER] ✅ Annotations state updated with 36 items
+[BROWSER] 📊 extractFormFields returned: 23 fields
+[BROWSER] ✅ Found 23 AcroForm fields
+[BROWSER] ✅ onDocumentLoadSuccess completed successfully
+[BROWSER] Annotations updated: [Object, Object, Object, Object, Object, Object, Object, Object, Object, Object]
+📸 Screenshot: 02-pdf-loaded.png
+
+5️⃣  Waiting for field extraction (10 seconds)...
+📸 Screenshot: 03-fields-extracted.png
+
+
+================================================
+📋 CONSOLE LOG ANALYSIS
+================================================
+
+🔍 Field Detection Logs:
+----------------------------------------
+[log] 🔍 Starting field extraction...
+[log] 📱 Platform: Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Mobile/15E148 Safari/604.1
+[log] 📋 Getting form from PDFDocument...
+[warning] Removing XFA form data as pdf-lib does not support reading or writing XFA
+[log] 🔍 Getting form fields...
+[log] ✅ Total fields found: 23
+[log] Processing field: topmostSubform[0].Page1[0].f1_01[0]
+[log]   Field type: PDFTextField
+[log]   ✓ Field extracted successfully
+[log] Processing field: topmostSubform[0].Page1[0].f1_02[0]
+[log]   Field type: PDFTextField
+[log]   ✓ Field extracted successfully
+[log] Processing field: topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].c1_1[0]
+[log]   Field type: PDFCheckBox
+[log]   ✓ Field extracted successfully
+[log] Processing field: topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].c1_1[1]
+[log]   Field type: PDFCheckBox
+[log]   ✓ Field extracted successfully
+[log] Processing field: topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].c1_1[2]
+[log]   Field type: PDFCheckBox
+[log]   ✓ Field extracted successfully
+[log] Processing field: topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].c1_1[3]
+[log]   Field type: PDFCheckBox
+[log]   ✓ Field extracted successfully
+[log] Processing field: topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].c1_1[4]
+[log]   Field type: PDFCheckBox
+[log]   ✓ Field extracted successfully
+[log] Processing field: topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].c1_1[5]
+[log]   Field type: PDFCheckBox
+[log]   ✓ Field extracted successfully
+[log] Processing field: topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].f1_03[0]
+[log]   Field type: PDFTextField
+[log]   ✓ Field extracted successfully
+[log] Processing field: topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].c1_1[6]
+[log]   Field type: PDFCheckBox
+[log]   ✓ Field extracted successfully
+[log] Processing field: topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].f1_04[0]
+[log]   Field type: PDFTextField
+[log]   ✓ Field extracted successfully
+[log] Processing field: topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].c1_2[0]
+[log]   Field type: PDFCheckBox
+[log]   ✓ Field extracted successfully
+[log] Processing field: topmostSubform[0].Page1[0].f1_05[0]
+[log]   Field type: PDFTextField
+[log]   ✓ Field extracted successfully
+[log] Processing field: topmostSubform[0].Page1[0].f1_06[0]
+[log]   Field type: PDFTextField
+[log]   ✓ Field extracted successfully
+[log] Processing field: topmostSubform[0].Page1[0].Address_ReadOrder[0].f1_07[0]
+[log]   Field type: PDFTextField
+[log]   ✓ Field extracted successfully
+[log] Processing field: topmostSubform[0].Page1[0].Address_ReadOrder[0].f1_08[0]
+[log]   Field type: PDFTextField
+[log]   ✓ Field extracted successfully
+[log] Processing field: topmostSubform[0].Page1[0].f1_09[0]
+[log]   Field type: PDFTextField
+[log]   ✓ Field extracted successfully
+[log] Processing field: topmostSubform[0].Page1[0].f1_10[0]
+[log]   Field type: PDFTextField
+[log]   ✓ Field extracted successfully
+[log] Processing field: topmostSubform[0].Page1[0].f1_11[0]
+[log]   Field type: PDFTextField
+[log]   ✓ Field extracted successfully
+[log] Processing field: topmostSubform[0].Page1[0].f1_12[0]
+[log]   Field type: PDFTextField
+[log]   ✓ Field extracted successfully
+[log] Processing field: topmostSubform[0].Page1[0].f1_13[0]
+[log]   Field type: PDFTextField
+[log]   ✓ Field extracted successfully
+[log] Processing field: topmostSubform[0].Page1[0].f1_14[0]
+[log]   Field type: PDFTextField
+[log]   ✓ Field extracted successfully
+[log] Processing field: topmostSubform[0].Page1[0].f1_15[0]
+[log]   Field type: PDFTextField
+[log]   ✓ Field extracted successfully
+[log] Total fields extracted: 23
+[log] Extracted form fields: [Object, Object, Object, Object, Object, Object, Object, Object, Object, Object]
+[log] Converting fields to annotations...
+[log] 📊 Fields to convert: 23
+[log] 📋 Detected form type: FW9
+[log] Converting field "topmostSubform[0].Page1[0].f1_01[0]": {type: text, rect: undefined, pageNumber: 1, pageIndex: 0}
+[log]   No config for field: topmostSubform[0].Page1[0].f1_01[0], checking heuristics...
+[log]   Created single annotation: {id: formfield-topmostSubform[0].Page1[0].f1_01[0]-1764640910208, type: formfield, x: 58.6, y: 111.00099999999998, width: 517.4}
+[log] Converting field "topmostSubform[0].Page1[0].f1_02[0]": {type: text, rect: undefined, pageNumber: 1, pageIndex: 0}
+[log]   No config for field: topmostSubform[0].Page1[0].f1_02[0], checking heuristics...
+[log]   Created single annotation: {id: formfield-topmostSubform[0].Page1[0].f1_02[0]-1764640910208, type: formfield, x: 58.6, y: 135.0005, width: 517.4}
+[log] Converting field "topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].c1_1[0]": {type: checkbox, rect: undefined, pageNumber: 1, pageIndex: 0}
+[log]   Created annotation: {id: formfield-topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].c1_1[0]-1764640910209, type: formfield, x: 73, y: 180.2489999999999, width: 8}
+[log] Converting field "topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].c1_1[1]": {type: checkbox, rect: undefined, pageNumber: 1, pageIndex: 0}
+[log]   Created annotation: {id: formfield-topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].c1_1[1]-1764640910209, type: formfield, x: 180, y: 180.2489999999999, width: 8}
+[log] Converting field "topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].c1_1[2]": {type: checkbox, rect: undefined, pageNumber: 1, pageIndex: 0}
+[log]   Created annotation: {id: formfield-topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].c1_1[2]-1764640910209, type: formfield, x: 252, y: 180.2489999999999, width: 8}
+[log] Converting field "topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].c1_1[3]": {type: checkbox, rect: undefined, pageNumber: 1, pageIndex: 0}
+[log]   Created annotation: {id: formfield-topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].c1_1[3]-1764640910209, type: formfield, x: 324, y: 180.2489999999999, width: 8}
+[log] Converting field "topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].c1_1[4]": {type: checkbox, rect: undefined, pageNumber: 1, pageIndex: 0}
+[log]   Created annotation: {id: formfield-topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].c1_1[4]-1764640910209, type: formfield, x: 388.8, y: 180.2489999999999, width: 8}
+[log] Converting field "topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].c1_1[5]": {type: checkbox, rect: undefined, pageNumber: 1, pageIndex: 0}
+[log]   Created annotation: {id: formfield-topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].c1_1[5]-1764640910209, type: formfield, x: 72.999, y: 193.49799999999993, width: 8}
+[log] Converting field "topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].f1_03[0]": {type: text, rect: undefined, pageNumber: 1, pageIndex: 0}
+[log]   No config for field: topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].f1_03[0], checking heuristics...
+[log]   Created single annotation: {id: formfield-topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].f1_03[0]-1764640910209, type: formfield, x: 417.6, y: 186.4994999999999, width: 28.799999999999955}
+[log] Converting field "topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].c1_1[6]": {type: checkbox, rect: undefined, pageNumber: 1, pageIndex: 0}
+[log]   Created annotation: {id: formfield-topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].c1_1[6]-1764640910209, type: formfield, x: 72.999, y: 229.99799999999993, width: 8}
+[log] Converting field "topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].f1_04[0]": {type: text, rect: undefined, pageNumber: 1, pageIndex: 0}
+[log]   No config for field: topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].f1_04[0], checking heuristics...
+[log]   Created single annotation: {id: formfield-topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].f1_04[0]-1764640910209, type: formfield, x: 162.4, y: 221.9994999999999, width: 284}
+[log] Converting field "topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].c1_2[0]": {type: checkbox, rect: undefined, pageNumber: 1, pageIndex: 0}
+[log]   Created annotation: {id: formfield-topmostSubform[0].Page1[0].Boxes3a-b_ReadOrder[0].c1_2[0]-1764640910209, type: formfield, x: 440.6, y: 262.99699999999996, width: 8}
+[log] Converting field "topmostSubform[0].Page1[0].f1_05[0]": {type: text, rect: undefined, pageNumber: 1, pageIndex: 0}
+[log]   No config for field: topmostSubform[0].Page1[0].f1_05[0], checking heuristics...
+[log]   Created single annotation: {id: formfield-topmostSubform[0].Page1[0].f1_05[0]-1764640910209, type: formfield, x: 543.6, y: 185.9994999999999, width: 32.39999999999998}
+[log] Converting field "topmostSubform[0].Page1[0].f1_06[0]": {type: text, rect: undefined, pageNumber: 1, pageIndex: 0}
+[log]   No config for field: topmostSubform[0].Page1[0].f1_06[0], checking heuristics...
+[log]   Created single annotation: {id: formfield-topmostSubform[0].Page1[0].f1_06[0]-1764640910209, type: formfield, x: 500.6, y: 221.9994999999999, width: 75.39999999999998}
+[log] Converting field "topmostSubform[0].Page1[0].Address_ReadOrder[0].f1_07[0]": {type: text, rect: undefined, pageNumber: 1, pageIndex: 0}
+[log]   No config for field: topmostSubform[0].Page1[0].Address_ReadOrder[0].f1_07[0], checking heuristics...
+[log]   Created single annotation: {id: formfield-topmostSubform[0].Page1[0].Address_ReadOrder[0].f1_07[0]-1764640910210, type: formfield, x: 58.6, y: 279.0005, width: 329.45}
+[log] Converting field "topmostSubform[0].Page1[0].Address_ReadOrder[0].f1_08[0]": {type: text, rect: undefined, pageNumber: 1, pageIndex: 0}
+[log]   No config for field: topmostSubform[0].Page1[0].Address_ReadOrder[0].f1_08[0], checking heuristics...
+[log]   Created single annotation: {id: formfield-topmostSubform[0].Page1[0].Address_ReadOrder[0].f1_08[0]-1764640910210, type: formfield, x: 58.6, y: 302.9985, width: 329.45}
+[log] Converting field "topmostSubform[0].Page1[0].f1_09[0]": {type: text, rect: undefined, pageNumber: 1, pageIndex: 0}
+[log]   No config for field: topmostSubform[0].Page1[0].f1_09[0], checking heuristics...
+[log]   Created single annotation: {id: formfield-topmostSubform[0].Page1[0].f1_09[0]-1764640910210, type: formfield, x: 389.8, y: 286.001, width: 186.2}
+[log] Converting field "topmostSubform[0].Page1[0].f1_10[0]": {type: text, rect: undefined, pageNumber: 1, pageIndex: 0}
+[log]   No config for field: topmostSubform[0].Page1[0].f1_10[0], checking heuristics...
+[log]   Created single annotation: {id: formfield-topmostSubform[0].Page1[0].f1_10[0]-1764640910210, type: formfield, x: 58.6, y: 326.9994999999999, width: 517.4}
+[log] Converting field "topmostSubform[0].Page1[0].f1_11[0]": {type: text, rect: undefined, pageNumber: 1, pageIndex: 0}
+[log]   ✓ Using configured split: 3 boxes for field: topmostSubform[0].Page1[0].f1_11[0]
+[log] Converting field "topmostSubform[0].Page1[0].f1_12[0]": {type: text, rect: undefined, pageNumber: 1, pageIndex: 0}
+[log]   ✓ Using configured split: 2 boxes for field: topmostSubform[0].Page1[0].f1_12[0]
+[log] Converting field "topmostSubform[0].Page1[0].f1_13[0]": {type: text, rect: undefined, pageNumber: 1, pageIndex: 0}
+[log]   ✓ Using configured split: 4 boxes for field: topmostSubform[0].Page1[0].f1_13[0]
+[log] Converting field "topmostSubform[0].Page1[0].f1_14[0]": {type: text, rect: undefined, pageNumber: 1, pageIndex: 0}
+[log]   ✓ Using configured split: 2 boxes for field: topmostSubform[0].Page1[0].f1_14[0]
+[log] Converting field "topmostSubform[0].Page1[0].f1_15[0]": {type: text, rect: undefined, pageNumber: 1, pageIndex: 0}
+[log]   ✓ Using configured split: 7 boxes for field: topmostSubform[0].Page1[0].f1_15[0]
+[log] ✅ Total annotations created: 36
+[log] 💾 Setting annotations state...
+[log] 📊 extractFormFields returned: 23 fields
+[log] ✅ Found 23 AcroForm fields
+
+✅ Success Indicators:
+----------------------------------------
+[log] ✅ ArrayBuffer read successfully, size: 140815
+[log] ✅ File processed successfully
+[log] ✅ PDF loaded successfully, pages: 6
+[log] ✅ PDF loaded, size: 140815 bytes
+[log] ✅ PDFDocument loaded successfully
+[log] ✅ Form object retrieved: exists
+[log] ✅ Total fields found: 23
+[log]   ✓ Field extracted successfully
+[log]   ✓ Field extracted successfully
+[log]   ✓ Field extracted successfully
+[log]   ✓ Field extracted successfully
+[log]   ✓ Field extracted successfully
+[log]   ✓ Field extracted successfully
+[log]   ✓ Field extracted successfully
+[log]   ✓ Field extracted successfully
+[log]   ✓ Field extracted successfully
+[log]   ✓ Field extracted successfully
+[log]   ✓ Field extracted successfully
+[log]   ✓ Field extracted successfully
+[log]   ✓ Field extracted successfully
+[log]   ✓ Field extracted successfully
+[log]   ✓ Field extracted successfully
+[log]   ✓ Field extracted successfully
+[log]   ✓ Field extracted successfully
+[log]   ✓ Field extracted successfully
+[log]   ✓ Field extracted successfully
+[log]   ✓ Field extracted successfully
+[log]   ✓ Field extracted successfully
+[log]   ✓ Field extracted successfully
+[log]   ✓ Field extracted successfully
+[log] ✅ Total pages: 6
+[log] ✅ Page rendered: PDFPageProxy
+[log]   ✓ Using configured split: 3 boxes for field: topmostSubform[0].Page1[0].f1_11[0]
+[log]   ✓ Using configured split: 2 boxes for field: topmostSubform[0].Page1[0].f1_12[0]
+[log]   ✓ Using configured split: 4 boxes for field: topmostSubform[0].Page1[0].f1_13[0]
+[log]   ✓ Using configured split: 2 boxes for field: topmostSubform[0].Page1[0].f1_14[0]
+[log]   ✓ Using configured split: 7 boxes for field: topmostSubform[0].Page1[0].f1_15[0]
+[log] ✅ Total annotations created: 36
+[log] ✅ Annotations state updated with 36 items
+[log] ✅ Found 23 AcroForm fields
+[log] ✅ onDocumentLoadSuccess completed successfully
+
+❌ Error Indicators:
+----------------------------------------
+No errors found ✓
+
+================================================
+📊 FIELD DETECTION SUMMARY
+================================================
+
+✅ Fields Found: [log] ✅ Total fields found: 23
+✅ Annotations Created: [log] ✅ Total annotations created: 36
+✅ State Updated: [log] ✅ Annotations state updated with 36 items
+
+6️⃣  Checking for visible form field inputs...
+   📝 Found 28 text input fields on page
+
+✅ "Form Fields Ready" message is visible
+   📋 ✓Form Fields Ready23 fillable fields automatically detected. Just click and type!How to use:• Click any highlighted field to type or edit• Use "Add Signature" to draw and place your signature• Drag and resize signatures, then click ✓ to confirm• Click "Download PDF" to save your completed document
+
+📁 Full console logs saved to: test-results/field-detection-logs-1764640922605.txt
+
+================================================
+✅ Test Complete!
+================================================
+
+  ✓  1 [iPhone 14 Pro] › tests/automated-field-detection.spec.ts:5:7 › Automated Field Detection Test › should detect and display form fields from W9 PDF (14.3s)
+
+  1 passed (14.8s)
