@@ -50,10 +50,9 @@ export async function POST(request: NextRequest) {
 
       case 'invoice.payment_succeeded': {
         const invoice = event.data.object as Stripe.Invoice;
-        if (invoice.subscription) {
-          const subscription = await stripe.subscriptions.retrieve(
-            invoice.subscription as string
-          );
+        const subscriptionId = (invoice as { subscription?: string | null }).subscription;
+        if (subscriptionId) {
+          const subscription = await stripe.subscriptions.retrieve(subscriptionId);
           await handleSubscriptionChange(subscription);
         }
         break;
@@ -100,6 +99,12 @@ async function handleSubscriptionChange(subscription: Stripe.Subscription) {
   const status = mapStripeStatus(subscription.status);
   const plan = subscription.items.data[0]?.price?.id ? 'pro' : 'free';
 
+  // Access properties with type assertion for compatibility
+  const sub = subscription as unknown as {
+    trial_end?: number | null;
+    current_period_end: number;
+  };
+
   await supabaseAdmin
     .from('subscriptions')
     .upsert({
@@ -108,11 +113,11 @@ async function handleSubscriptionChange(subscription: Stripe.Subscription) {
       stripe_subscription_id: subscription.id,
       status,
       plan,
-      trial_ends_at: subscription.trial_end
-        ? new Date(subscription.trial_end * 1000).toISOString()
+      trial_ends_at: sub.trial_end
+        ? new Date(sub.trial_end * 1000).toISOString()
         : null,
       current_period_end: new Date(
-        subscription.current_period_end * 1000
+        sub.current_period_end * 1000
       ).toISOString(),
     });
 }
