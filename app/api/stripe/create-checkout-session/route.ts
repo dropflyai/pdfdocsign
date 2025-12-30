@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe/client';
 import { createClient } from '@supabase/supabase-js';
+import { verifyAuthenticatedUser } from '@/lib/auth/verify-user';
+import { checkRateLimit, getClientIP, RATE_LIMITS } from '@/lib/security/rate-limit';
+import { logRateLimited, logSubscriptionEvent } from '@/lib/security/audit-log';
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -9,14 +12,23 @@ const supabaseAdmin = createClient(
 
 export async function POST(request: NextRequest) {
   try {
-    const { userId, email, priceId } = await request.json();
-
-    if (!userId || !email) {
-      return NextResponse.json(
-        { error: 'User ID and email are required' },
-        { status: 400 }
-      );
+    // SECURITY: Rate limiting
+    const clientIP = getClientIP(request);
+    const rateLimitResult = checkRateLimit(`checkout:${clientIP}`, RATE_LIMITS.api);
+    if (!rateLimitResult.success) {
+      await logRateLimited(request, 'checkout');
+      return rateLimitResult.error!;
     }
+
+    // SECURITY: Verify the user is authenticated
+    const { user, error: authError } = await verifyAuthenticatedUser();
+    if (authError) return authError;
+
+    const { priceId } = await request.json();
+
+    // Use authenticated user's ID and email - don't trust client-provided values
+    const userId = user!.id;
+    const email = user!.email;
 
     // Check if user already has a Stripe customer ID
     const { data: subscription } = await supabaseAdmin
@@ -71,6 +83,14 @@ export async function POST(request: NextRequest) {
         supabase_user_id: userId,
       },
     });
+
+    // Audit log checkout initiation
+    await logSubscriptionEvent(
+      'subscription.created',
+      userId,
+      session.id,
+      { priceId: priceId || process.env.STRIPE_MONTHLY_PRICE_ID, checkout: true }
+    );
 
     return NextResponse.json({ url: session.url });
   } catch (error) {

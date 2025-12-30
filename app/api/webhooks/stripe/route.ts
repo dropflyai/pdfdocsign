@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe/client';
 import { createClient } from '@supabase/supabase-js';
 import Stripe from 'stripe';
+import { logSubscriptionEvent } from '@/lib/security/audit-log';
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -120,10 +121,30 @@ async function handleSubscriptionChange(subscription: Stripe.Subscription) {
         sub.current_period_end * 1000
       ).toISOString(),
     });
+
+  // Audit log the subscription event
+  if (userId) {
+    const eventType = subscription.status === 'trialing'
+      ? 'subscription.trial_started'
+      : 'subscription.updated';
+    await logSubscriptionEvent(
+      eventType,
+      userId,
+      subscription.id,
+      { status, plan, stripe_status: subscription.status }
+    );
+  }
 }
 
 async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
   const customerId = subscription.customer as string;
+
+  // Get user_id before updating
+  const { data: existingSub } = await supabaseAdmin
+    .from('subscriptions')
+    .select('user_id')
+    .eq('stripe_customer_id', customerId)
+    .single();
 
   await supabaseAdmin
     .from('subscriptions')
@@ -133,6 +154,16 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
       stripe_subscription_id: null,
     })
     .eq('stripe_customer_id', customerId);
+
+  // Audit log cancellation
+  if (existingSub?.user_id) {
+    await logSubscriptionEvent(
+      'subscription.canceled',
+      existingSub.user_id,
+      subscription.id,
+      { reason: 'subscription_deleted' }
+    );
+  }
 }
 
 async function handlePaymentFailed(invoice: Stripe.Invoice) {
