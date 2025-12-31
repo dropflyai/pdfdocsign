@@ -49,18 +49,18 @@ export default function BillingPage() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <h1 className="text-2xl font-bold text-gray-900 mb-8">Billing</h1>
+      <h1 className="text-2xl font-bold text-white mb-8">Billing</h1>
 
       {/* Current plan */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+      <div className="bg-[#0f0f0f] rounded-xl border border-zinc-800 p-6 mb-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900">Current Plan</h2>
+          <h2 className="text-lg font-semibold text-white">Current Plan</h2>
           <span className={`px-3 py-1 text-sm font-medium rounded-full ${
             isPro
               ? isTrialing
-                ? 'bg-yellow-100 text-yellow-700'
-                : 'bg-indigo-100 text-indigo-700'
-              : 'bg-gray-100 text-gray-700'
+                ? 'bg-yellow-900/50 text-yellow-400'
+                : 'bg-purple-900/50 text-purple-400'
+              : 'bg-zinc-800 text-zinc-300'
           }`}>
             {isPro ? (isTrialing ? 'Pro (Trial)' : 'Pro') : 'Free'}
           </span>
@@ -68,42 +68,42 @@ export default function BillingPage() {
 
         {isPro ? (
           <div className="space-y-4">
-            <div className="flex justify-between items-center py-3 border-b border-gray-100">
-              <span className="text-gray-600">Monthly price</span>
-              <span className="font-semibold">$9.99/month</span>
+            <div className="flex justify-between items-center py-3 border-b border-zinc-800">
+              <span className="text-zinc-400">Monthly price</span>
+              <span className="font-semibold text-white">$9.99/month</span>
             </div>
             {isTrialing && subscription?.trialEndsAt && (
-              <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                <span className="text-gray-600">Trial ends</span>
-                <span className="font-semibold">{formatDate(subscription.trialEndsAt)}</span>
+              <div className="flex justify-between items-center py-3 border-b border-zinc-800">
+                <span className="text-zinc-400">Trial ends</span>
+                <span className="font-semibold text-white">{formatDate(subscription.trialEndsAt)}</span>
               </div>
             )}
-            <div className="flex justify-between items-center py-3 border-b border-gray-100">
-              <span className="text-gray-600">Next billing date</span>
-              <span className="font-semibold">{formatDate(subscription?.currentPeriodEnd || null)}</span>
+            <div className="flex justify-between items-center py-3 border-b border-zinc-800">
+              <span className="text-zinc-400">Next billing date</span>
+              <span className="font-semibold text-white">{formatDate(subscription?.currentPeriodEnd || null)}</span>
             </div>
             <button
               onClick={handleManageSubscription}
               disabled={loading}
-              className="text-indigo-600 hover:text-indigo-700 font-medium disabled:opacity-50"
+              className="text-purple-400 hover:text-purple-300 font-medium disabled:opacity-50"
             >
               {loading ? 'Loading...' : 'Manage subscription'}
             </button>
           </div>
         ) : (
           <div>
-            <p className="text-gray-600 mb-4">
+            <p className="text-zinc-400 mb-4">
               Upgrade to Pro to unlock all features including unlimited documents,
               send for signature, cloud storage, and more.
             </p>
             <button
               onClick={handleUpgrade}
               disabled={loading}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all shadow-md disabled:opacity-50"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold rounded-xl hover:from-purple-700 hover:to-indigo-700 transition-all shadow-md shadow-purple-500/20 disabled:opacity-50"
             >
               {loading ? 'Loading...' : 'Upgrade to Pro - $9.99/month'}
             </button>
-            <p className="text-sm text-gray-500 mt-2">
+            <p className="text-sm text-zinc-500 mt-2">
               7-day free trial included
             </p>
           </div>
@@ -111,8 +111,8 @@ export default function BillingPage() {
       </div>
 
       {/* Pro features */}
-      <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl p-6">
-        <h3 className="font-semibold text-gray-900 mb-4">Pro Features</h3>
+      <div className="bg-gradient-to-br from-purple-900/20 to-indigo-900/20 rounded-xl border border-purple-800/30 p-6">
+        <h3 className="font-semibold text-white mb-4">Pro Features</h3>
         <ul className="space-y-3">
           {[
             'Unlimited documents',
@@ -124,10 +124,10 @@ export default function BillingPage() {
             'Priority support',
           ].map((feature) => (
             <li key={feature} className="flex items-center gap-3">
-              <svg className="w-5 h-5 text-indigo-600" fill="currentColor" viewBox="0 0 20 20">
+              <svg className="w-5 h-5 text-purple-400" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
               </svg>
-              <span className="text-gray-700">{feature}</span>
+              <span className="text-zinc-300">{feature}</span>
             </li>
           ))}
         </ul>

@@ -5,6 +5,7 @@ import { Document, Page, pdfjs } from 'react-pdf';
 import { PDFDocument, rgb } from 'pdf-lib';
 import SignaturePad from 'signature_pad';
 import { usePremium } from '@/contexts/PremiumContext';
+import SendForSignatureModal from '@/components/app/SendForSignatureModal';
 
 // iOS WebKit fix: Use HTTPS CDN for worker
 pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.mjs`;
@@ -12,6 +13,8 @@ pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pd
 interface PDFEditorProps {
   file: File;
   onReset?: () => void;
+  documentId?: string;
+  initialAnnotations?: Annotation[];
 }
 
 interface Annotation {
@@ -70,11 +73,14 @@ interface TextItem {
   pageNumber: number;
 }
 
-export default function PDFEditorSimple({ file, onReset }: PDFEditorProps) {
-  const { setShowPaywall } = usePremium();
+export default function PDFEditorSimple({ file, onReset, documentId, initialAnnotations }: PDFEditorProps) {
+  const { setShowPaywall, isPremium } = usePremium();
   const [numPages, setNumPages] = useState<number>(0);
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const [annotations, setAnnotations] = useState<Annotation[]>([]);
+  const [annotations, setAnnotations] = useState<Annotation[]>(initialAnnotations || []);
+  const [isSaving, setIsSaving] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [selectedTool, setSelectedTool] = useState<'select' | 'text' | 'signature' | 'eraser'>('select');
   const [selectedAnnotation, setSelectedAnnotation] = useState<string | null>(null);
   const [showSignatureModal, setShowSignatureModal] = useState(false);
@@ -105,6 +111,7 @@ export default function PDFEditorSimple({ file, onReset }: PDFEditorProps) {
   const [confirmedSignatureIds, setConfirmedSignatureIds] = useState<Set<string>>(new Set());
   const [showDownloadModal, setShowDownloadModal] = useState(false);
   const [downloadFilename, setDownloadFilename] = useState<string>('');
+  const [showSendModal, setShowSendModal] = useState(false);
 
   const signatureCanvasRef = useRef<HTMLCanvasElement>(null);
   const signaturePadRef = useRef<SignaturePad | null>(null);
@@ -114,6 +121,47 @@ export default function PDFEditorSimple({ file, onReset }: PDFEditorProps) {
   useEffect(() => {
     console.log('Annotations updated:', annotations);
   }, [annotations]);
+
+  // Auto-save annotations when they change (debounced)
+  useEffect(() => {
+    if (!documentId) return; // Only save if we have a document ID
+
+    // Clear any pending save timeout
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+
+    // Debounce save to avoid too many API calls
+    saveTimeoutRef.current = setTimeout(async () => {
+      try {
+        setIsSaving(true);
+
+        // Save annotations directly (format matches storage interface)
+        const response = await fetch(`/api/documents/${documentId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            annotations: annotations,
+            pageCount: numPages,
+          }),
+        });
+
+        if (response.ok) {
+          setLastSaved(new Date());
+        }
+      } catch (error) {
+        console.error('Failed to auto-save:', error);
+      } finally {
+        setIsSaving(false);
+      }
+    }, 2000); // Save 2 seconds after last change
+
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, [annotations, documentId, numPages]);
 
   // Touch event handlers for pinch-to-zoom and panning
   useEffect(() => {
@@ -1377,9 +1425,17 @@ export default function PDFEditorSimple({ file, onReset }: PDFEditorProps) {
           </span>
         </button>
 
-        {/* Hide PRO button on mobile to save space */}
+        {/* Send for Signature button */}
         <button
-          onClick={() => setShowPaywall(true)}
+          onClick={() => {
+            if (!isPremium) {
+              setShowPaywall(true);
+            } else if (!documentId) {
+              alert('Please save your document first before sending for signature.');
+            } else {
+              setShowSendModal(true);
+            }
+          }}
           className="hidden sm:block relative px-4 sm:px-6 py-2.5 bg-white border-2 border-purple-200 text-purple-700 rounded-xl hover:bg-purple-50 hover:border-purple-300 text-xs sm:text-sm font-semibold shadow-sm hover:shadow-md transition-all duration-200"
         >
           <span className="inline-flex items-center gap-2">
@@ -1387,13 +1443,37 @@ export default function PDFEditorSimple({ file, onReset }: PDFEditorProps) {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
             <span className="hidden sm:inline">Send for Signature</span>
-            <span className="absolute -top-1 -right-1 px-1.5 py-0.5 bg-gradient-to-r from-amber-400 to-orange-500 text-white text-xs font-bold rounded-full">
-              PRO
-            </span>
+            {!isPremium && (
+              <span className="absolute -top-1 -right-1 px-1.5 py-0.5 bg-gradient-to-r from-amber-400 to-orange-500 text-white text-xs font-bold rounded-full">
+                PRO
+              </span>
+            )}
           </span>
         </button>
 
         <div className="flex-1" />
+
+        {/* Save status indicator */}
+        {documentId && (
+          <div className="hidden sm:flex items-center gap-2 text-xs text-gray-500">
+            {isSaving ? (
+              <>
+                <div className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></div>
+                <span>Saving...</span>
+              </>
+            ) : lastSaved ? (
+              <>
+                <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                <span>Saved</span>
+              </>
+            ) : (
+              <>
+                <div className="w-2 h-2 rounded-full bg-gray-400"></div>
+                <span>Cloud sync</span>
+              </>
+            )}
+          </div>
+        )}
 
         <button
           onClick={prepareDownload}
@@ -2120,6 +2200,19 @@ export default function PDFEditorSimple({ file, onReset }: PDFEditorProps) {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Send for Signature Modal */}
+      {documentId && (
+        <SendForSignatureModal
+          documentId={documentId}
+          documentName={file.name}
+          isOpen={showSendModal}
+          onClose={() => setShowSendModal(false)}
+          onSuccess={() => {
+            // Could refresh document list or show success message
+          }}
+        />
       )}
     </div>
   );

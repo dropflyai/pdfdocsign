@@ -12,6 +12,7 @@ export type AuditEventType =
   // Document events
   | 'document.created'
   | 'document.viewed'
+  | 'document.updated'
   | 'document.downloaded'
   | 'document.deleted'
   | 'document.signed'
@@ -172,7 +173,7 @@ export async function logRateLimited(
 }
 
 export async function logDocumentEvent(
-  type: 'document.created' | 'document.viewed' | 'document.downloaded' | 'document.deleted' | 'document.signed',
+  type: 'document.created' | 'document.viewed' | 'document.updated' | 'document.downloaded' | 'document.deleted' | 'document.signed',
   request: Request,
   userId: string,
   documentId: string,
