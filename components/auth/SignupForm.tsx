@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export default function SignupForm() {
   const [name, setName] = useState('');
@@ -12,6 +13,7 @@ export default function SignupForm() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const { signUp, signInWithGoogle } = useAuth();
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,13 +26,17 @@ export default function SignupForm() {
       return;
     }
 
-    const { error } = await signUp(email, password, name);
+    const { error, needsEmailConfirmation } = await signUp(email, password, name);
 
     if (error) {
       setError(error.message);
       setLoading(false);
-    } else {
+    } else if (needsEmailConfirmation) {
+      // Email confirmation required - show success message
       setSuccess(true);
+    } else {
+      // User was logged in immediately (email confirmation disabled)
+      router.push('/dashboard');
     }
   };
 
@@ -83,7 +89,7 @@ export default function SignupForm() {
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all bg-white text-gray-900 placeholder-gray-400"
               placeholder="John Doe"
               required
             />
@@ -98,7 +104,7 @@ export default function SignupForm() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all bg-white text-gray-900 placeholder-gray-400"
               placeholder="you@example.com"
               required
             />
@@ -113,7 +119,7 @@ export default function SignupForm() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all bg-white text-gray-900 placeholder-gray-400"
               placeholder="At least 6 characters"
               required
               minLength={6}
