@@ -7,6 +7,13 @@ import SignaturePad from 'signature_pad';
 import { usePremium } from '@/contexts/PremiumContext';
 import SendForSignatureModal from '@/components/app/SendForSignatureModal';
 
+// Dev-only logger -- no-ops in production builds
+const isDev = process.env.NODE_ENV === 'development';
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const devLog = isDev ? (...args: any[]) => console.log(...args) : () => {};
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const devWarn = isDev ? (...args: any[]) => console.warn(...args) : () => {};
+
 // iOS WebKit fix: Use HTTPS CDN for worker
 pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.mjs`;
 
@@ -119,7 +126,7 @@ export default function PDFEditorSimple({ file, onReset, documentId, initialAnno
   const justFinishedResizingRef = useRef<boolean>(false);
 
   useEffect(() => {
-    console.log('Annotations updated:', annotations);
+    devLog('Annotations updated:', annotations);
   }, [annotations]);
 
   // Auto-save annotations when they change (debounced)
@@ -362,16 +369,19 @@ export default function PDFEditorSimple({ file, onReset, documentId, initialAnno
   const onDocumentLoadSuccess = async ({ numPages }: { numPages: number }) => {
     try {
       setNumPages(numPages);
-      // Automatically extract form fields on load (like Adobe Fill & Sign)
-      const extractedFields = await extractFormFields();
+      // Form field auto-detection is a Pro feature
+      if (isPremium) {
+        // Automatically extract form fields on load (like Adobe Fill & Sign)
+        const extractedFields = await extractFormFields();
 
-      // If no fields found with pdf-lib, try pdf.js annotation detection
-      if (extractedFields.length === 0) {
-        console.log('No AcroForm fields found, trying pdf.js annotation detection...');
-        await extractAnnotationsWithPdfJs();
+        // If no fields found with pdf-lib, try pdf.js annotation detection
+        if (extractedFields.length === 0) {
+          devLog('No AcroForm fields found, trying pdf.js annotation detection...');
+          await extractAnnotationsWithPdfJs();
+        }
+
+        setShowFormFields(true);
       }
-
-      setShowFormFields(true);
     } catch (error) {
       console.error('Error loading PDF:', error);
       alert('There was an error loading your PDF. Please try a different file or go back and try again.');
@@ -419,7 +429,7 @@ export default function PDFEditorSimple({ file, onReset, documentId, initialAnno
         }
       }
 
-      console.log('Extracted text items:', allTextItems);
+      devLog('Extracted text items:', allTextItems);
       setExtractedText(allTextItems);
 
       // Convert text items to editable annotations
@@ -479,29 +489,29 @@ export default function PDFEditorSimple({ file, onReset, documentId, initialAnno
     }
 
     setAnnotations([...otherAnnotations, ...newBoxes]);
-    console.log(`✂️ Split field into ${boxCount} boxes`);
+    devLog(`✂️ Split field into ${boxCount} boxes`);
   };
 
   const extractFormFields = async () => {
-    console.log('=== STARTING FORM FIELD EXTRACTION ===');
+    devLog('=== STARTING FORM FIELD EXTRACTION ===');
     try {
       const arrayBuffer = await file.arrayBuffer();
-      console.log('PDF loaded, size:', arrayBuffer.byteLength, 'bytes');
+      devLog('PDF loaded, size:', arrayBuffer.byteLength, 'bytes');
 
       const pdfDoc = await PDFDocument.load(arrayBuffer);
-      console.log('PDFDocument loaded');
+      devLog('PDFDocument loaded');
 
       const form = pdfDoc.getForm();
-      console.log('Form object:', form);
+      devLog('Form object:', form);
 
       const fields = form.getFields();
-      console.log('Total fields found:', fields.length);
+      devLog('Total fields found:', fields.length);
 
       const extractedFields: FormField[] = [];
 
       for (const field of fields) {
         const fieldName = field.getName();
-        console.log('Processing field:', fieldName);
+        devLog('Processing field:', fieldName);
 
         let fieldValue = '';
         let fieldType = 'unknown';
@@ -509,7 +519,7 @@ export default function PDFEditorSimple({ file, onReset, documentId, initialAnno
         try {
           // Try to get value based on field type
           const fieldConstructor = field.constructor.name;
-          console.log('  Field type:', fieldConstructor);
+          devLog('  Field type:', fieldConstructor);
 
           if (fieldConstructor === 'PDFTextField') {
             const textField = form.getTextField(fieldName);
@@ -532,7 +542,7 @@ export default function PDFEditorSimple({ file, onReset, documentId, initialAnno
 
           // Get field widget (location info)
           const widgets = (field as any).acroField.getWidgets();
-          console.log('  Widgets found:', widgets?.length || 0);
+          devLog('  Widgets found:', widgets?.length || 0);
 
           if (widgets && widgets.length > 0) {
             const widget = widgets[0];
@@ -569,12 +579,12 @@ export default function PDFEditorSimple({ file, onReset, documentId, initialAnno
 
             // If still not found, default to page 0
             if (pageIndex === -1) {
-              console.log('  ⚠️ Could not determine page, defaulting to page 1');
+              devLog('  ⚠️ Could not determine page, defaulting to page 1');
               pageIndex = 0;
             }
 
-            console.log('  Rectangle:', rect);
-            console.log('  Page index:', pageIndex);
+            devLog('  Rectangle:', rect);
+            devLog('  Page index:', pageIndex);
 
             if (rect) {
               extractedFields.push({
@@ -584,29 +594,29 @@ export default function PDFEditorSimple({ file, onReset, documentId, initialAnno
                 rect: [rect.x, rect.y, rect.width, rect.height],
                 pageNumber: pageIndex + 1,
               });
-              console.log('  ✓ Field extracted successfully');
+              devLog('  ✓ Field extracted successfully');
             } else {
-              console.log('  ✗ No rectangle found');
+              devLog('  ✗ No rectangle found');
             }
           } else {
-            console.log('  ✗ No widgets found');
+            devLog('  ✗ No widgets found');
           }
         } catch (err) {
-          console.warn(`Could not extract field ${fieldName}:`, err);
+          devWarn(`Could not extract field ${fieldName}:`, err);
         }
       }
 
-      console.log('=== EXTRACTION COMPLETE ===');
-      console.log('Total fields extracted:', extractedFields.length);
-      console.log('Extracted form fields:', extractedFields);
+      devLog('=== EXTRACTION COMPLETE ===');
+      devLog('Total fields extracted:', extractedFields.length);
+      devLog('Extracted form fields:', extractedFields);
       setFormFields(extractedFields);
 
       // Automatically create annotations for form fields
       if (extractedFields.length > 0) {
-        console.log('Converting fields to annotations...');
+        devLog('Converting fields to annotations...');
         await convertFormFieldsToAnnotations(extractedFields);
       } else {
-        console.log('⚠️ No fields to convert - PDF may not have form fields');
+        devLog('⚠️ No fields to convert - PDF may not have form fields');
       }
 
       return extractedFields;
@@ -617,11 +627,11 @@ export default function PDFEditorSimple({ file, onReset, documentId, initialAnno
   };
 
   const extractAnnotationsWithPdfJs = async () => {
-    console.log('=== EXTRACTING ANNOTATIONS WITH PDF.JS ===');
+    devLog('=== EXTRACTING ANNOTATIONS WITH PDF.JS ===');
     try {
       const loadingTask = pdfjs.getDocument(await file.arrayBuffer());
       const pdf = await loadingTask.promise;
-      console.log('PDF loaded, total pages:', pdf.numPages);
+      devLog('PDF loaded, total pages:', pdf.numPages);
 
       const newAnnotations: Annotation[] = [];
 
@@ -629,10 +639,10 @@ export default function PDFEditorSimple({ file, onReset, documentId, initialAnno
         const page = await pdf.getPage(pageNum);
         const annotations = await page.getAnnotations();
 
-        console.log(`Page ${pageNum}: Found ${annotations.length} annotations`);
+        devLog(`Page ${pageNum}: Found ${annotations.length} annotations`);
 
         for (const annot of annotations) {
-          console.log('Annotation:', annot);
+          devLog('Annotation:', annot);
 
           // Check if it's a widget annotation (form field)
           if (annot.subtype === 'Widget' && annot.fieldType) {
@@ -648,7 +658,7 @@ export default function PDFEditorSimple({ file, onReset, documentId, initialAnno
             // Convert PDF coordinates to canvas coordinates
             const canvasY = pageHeight - rect[3];
 
-            console.log(`  Widget field:`, {
+            devLog(`  Widget field:`, {
               fieldName: annot.fieldName,
               fieldType: annot.fieldType,
               rect,
@@ -694,14 +704,14 @@ export default function PDFEditorSimple({ file, onReset, documentId, initialAnno
         }
       }
 
-      console.log('=== PDF.JS EXTRACTION COMPLETE ===');
-      console.log('Total annotations found:', newAnnotations.length);
+      devLog('=== PDF.JS EXTRACTION COMPLETE ===');
+      devLog('Total annotations found:', newAnnotations.length);
 
       if (newAnnotations.length > 0) {
         setAnnotations(newAnnotations);
-        console.log('Annotations set from pdf.js detection');
+        devLog('Annotations set from pdf.js detection');
       } else {
-        console.log('⚠️ No widget annotations found with pdf.js either');
+        devLog('⚠️ No widget annotations found with pdf.js either');
       }
     } catch (error) {
       console.error('❌ Error extracting annotations with pdf.js:', error);
@@ -714,11 +724,11 @@ export default function PDFEditorSimple({ file, onReset, documentId, initialAnno
 
     // Check for FW9 - look for characteristic field names
     if (fieldNames.some(name => name.includes('topmostSubform') && name.includes('Page1'))) {
-      console.log('📋 Detected form type: FW9');
+      devLog('📋 Detected form type: FW9');
       return 'FW9';
     }
 
-    console.log('📋 Form type not recognized - using generic handling');
+    devLog('📋 Form type not recognized - using generic handling');
     return null;
   };
 
@@ -751,14 +761,14 @@ export default function PDFEditorSimple({ file, onReset, documentId, initialAnno
   };
 
   const convertFormFieldsToAnnotations = async (fields: FormField[]) => {
-    console.log('=== CONVERTING FORM FIELDS TO ANNOTATIONS ===');
-    console.log('Fields to convert:', fields.length);
+    devLog('=== CONVERTING FORM FIELDS TO ANNOTATIONS ===');
+    devLog('Fields to convert:', fields.length);
     try {
       // We need the page dimensions to convert coordinates
       const arrayBuffer = await file.arrayBuffer();
       const pdfDoc = await PDFDocument.load(arrayBuffer);
       const pages = pdfDoc.getPages();
-      console.log('Total pages:', pages.length);
+      devLog('Total pages:', pages.length);
 
       const newAnnotations: Annotation[] = [];
 
@@ -773,7 +783,7 @@ export default function PDFEditorSimple({ file, onReset, documentId, initialAnno
         const [x, y, width, height] = field.rect;
         const pageIndex = field.pageNumber - 1;
 
-        console.log(`Converting field "${field.name}":`, {
+        devLog(`Converting field "${field.name}":`, {
           type: field.type,
           rect: field.rect,
           pageNumber: field.pageNumber,
@@ -803,21 +813,21 @@ export default function PDFEditorSimple({ file, onReset, documentId, initialAnno
             // Priority 1: Check configuration for this specific field
             if (fieldConfig[field.name]) {
               boxCount = fieldConfig[field.name];
-              console.log(`  ✓ Using configured split: ${boxCount} boxes for field: ${field.name}`);
+              devLog(`  ✓ Using configured split: ${boxCount} boxes for field: ${field.name}`);
             } else if (width > height * 1.5) {
               // Only use heuristic splitting if no config exists
-              console.log(`  No config for field: ${field.name}, checking heuristics...`);
+              devLog(`  No config for field: ${field.name}, checking heuristics...`);
             } else {
-              console.log(`  Field ${field.name} too narrow for splitting (width:${width} height:${height})`);
+              devLog(`  Field ${field.name} too narrow for splitting (width:${width} height:${height})`);
             }
 
             // Priority 2: Try to detect visual boxes (only for wider fields without config)
             if (boxCount === 0 && width > height * 1.5) {
               if (!visualBoxesCache.has(field.pageNumber)) {
-                console.log(`  Extracting visual boxes from page ${field.pageNumber}...`);
+                devLog(`  Extracting visual boxes from page ${field.pageNumber}...`);
                 const boxes = await extractVisualBoxes(field.pageNumber);
                 visualBoxesCache.set(field.pageNumber, boxes);
-                console.log(`  Found ${boxes.length} visual rectangles on page`);
+                devLog(`  Found ${boxes.length} visual rectangles on page`);
               }
 
               const visualBoxes = visualBoxesCache.get(field.pageNumber) || [];
@@ -838,7 +848,7 @@ export default function PDFEditorSimple({ file, onReset, documentId, initialAnno
               containedBoxes.sort((a, b) => a.x - b.x);
 
               if (containedBoxes.length >= 2) {
-                console.log(`  ✓ Using ${containedBoxes.length} detected visual boxes`);
+                devLog(`  ✓ Using ${containedBoxes.length} detected visual boxes`);
 
                 // Use the ACTUAL visual boxes!
                 for (let i = 0; i < containedBoxes.length; i++) {
@@ -879,7 +889,7 @@ export default function PDFEditorSimple({ file, onReset, documentId, initialAnno
               const gap = boxWidth * 0.05;
               const actualBoxWidth = boxWidth - gap;
 
-              console.log(`  Creating ${boxCount} evenly-spaced boxes`);
+              devLog(`  Creating ${boxCount} evenly-spaced boxes`);
 
               for (let i = 0; i < boxCount; i++) {
                 const boxX = x + (i * boxWidth);
@@ -921,7 +931,7 @@ export default function PDFEditorSimple({ file, onReset, documentId, initialAnno
                 fontSize: Math.min(12, height * 0.7),
                 textColor: '#000000',
               };
-              console.log('  Created single annotation:', annotation);
+              devLog('  Created single annotation:', annotation);
               newAnnotations.push(annotation);
             }
           } else {
@@ -943,21 +953,21 @@ export default function PDFEditorSimple({ file, onReset, documentId, initialAnno
               textColor: '#000000',
             };
 
-            console.log('  Created annotation:', annotation);
+            devLog('  Created annotation:', annotation);
             newAnnotations.push(annotation);
           }
         } else {
-          console.warn(`Page ${field.pageNumber} not found for field ${field.name}`);
+          devWarn(`Page ${field.pageNumber} not found for field ${field.name}`);
         }
       }
 
-      console.log('=== CONVERSION COMPLETE ===');
-      console.log('Total annotations created:', newAnnotations.length);
-      console.log('Annotations:', newAnnotations);
+      devLog('=== CONVERSION COMPLETE ===');
+      devLog('Total annotations created:', newAnnotations.length);
+      devLog('Annotations:', newAnnotations);
 
       // Replace all annotations with just the form fields
       setAnnotations(newAnnotations);
-      console.log('Annotations state updated');
+      devLog('Annotations state updated');
     } catch (error) {
       console.error('❌ Error converting form fields:', error);
     }
@@ -1055,10 +1065,10 @@ export default function PDFEditorSimple({ file, onReset, documentId, initialAnno
       imageData: transparentImageData,
     };
 
-    console.log('Creating signature annotation:', newAnnotation);
+    devLog('Creating signature annotation:', newAnnotation);
     setAnnotations(prev => {
       const updated = [...prev, newAnnotation];
-      console.log('Annotations after adding signature:', updated);
+      devLog('Annotations after adding signature:', updated);
       return updated;
     });
 
@@ -1191,8 +1201,8 @@ export default function PDFEditorSimple({ file, onReset, documentId, initialAnno
 
   const downloadPDF = async () => {
     try {
-      console.log('=== DOWNLOAD STARTED ===');
-      console.log(`Total annotations: ${annotations.length}`);
+      devLog('=== DOWNLOAD STARTED ===');
+      devLog(`Total annotations: ${annotations.length}`);
 
       const existingPdfBytes = await file.arrayBuffer();
       const pdfDoc = await PDFDocument.load(existingPdfBytes);
@@ -1203,10 +1213,10 @@ export default function PDFEditorSimple({ file, onReset, documentId, initialAnno
       const groupedFields = new Map<string, { fieldName: string; digits: string[] }>();
       for (const annotation of annotations) {
         if (annotation.type === 'formfield') {
-          console.log(`Formfield: ${annotation.fieldName}, has groupId: ${!!annotation.groupId}, groupIndex: ${annotation.groupIndex}, text: "${annotation.text}"`);
+          devLog(`Formfield: ${annotation.fieldName}, has groupId: ${!!annotation.groupId}, groupIndex: ${annotation.groupIndex}, text: "${annotation.text}"`);
         }
         if (annotation.type === 'formfield' && annotation.groupId && annotation.groupIndex !== undefined) {
-          console.log(`  ✓ Found grouped field: groupId=${annotation.groupId}, index=${annotation.groupIndex}, text="${annotation.text}"`);
+          devLog(`  ✓ Found grouped field: groupId=${annotation.groupId}, index=${annotation.groupIndex}, text="${annotation.text}"`);
           if (!groupedFields.has(annotation.groupId)) {
             groupedFields.set(annotation.groupId, { fieldName: annotation.groupId, digits: [] });
           }
@@ -1214,24 +1224,24 @@ export default function PDFEditorSimple({ file, onReset, documentId, initialAnno
           group.digits[annotation.groupIndex] = annotation.text || '';
         }
       }
-      console.log(`Total grouped fields found: ${groupedFields.size}`);
+      devLog(`Total grouped fields found: ${groupedFields.size}`);
 
       // Set the reconstructed values for grouped fields
       for (const [groupId, group] of groupedFields) {
         try {
           const fullValue = group.digits.join('');
-          console.log(`Setting grouped field ${groupId} to: "${fullValue}"`);
+          devLog(`Setting grouped field ${groupId} to: "${fullValue}"`);
           const field = form.getFieldMaybe(groupId);
           if (field && field.constructor.name === 'PDFTextField') {
             const textField = form.getTextField(groupId);
             textField.setText(fullValue);
             textField.enableReadOnly();
-            console.log(`  ✓ Successfully set ${groupId}`);
+            devLog(`  ✓ Successfully set ${groupId}`);
           } else {
-            console.warn(`  ✗ Field ${groupId} not found or not a text field`);
+            devWarn(`  ✗ Field ${groupId} not found or not a text field`);
           }
         } catch (err) {
-          console.warn(`Could not update grouped field ${groupId}:`, err);
+          devWarn(`Could not update grouped field ${groupId}:`, err);
         }
       }
 
@@ -1258,7 +1268,7 @@ export default function PDFEditorSimple({ file, onReset, documentId, initialAnno
               }
             }
           } catch (err) {
-            console.warn(`Could not update field ${annotation.fieldName}:`, err);
+            devWarn(`Could not update field ${annotation.fieldName}:`, err);
           }
         }
       }
@@ -1313,7 +1323,7 @@ export default function PDFEditorSimple({ file, onReset, documentId, initialAnno
                 color: textRgb,
               });
             } catch (err) {
-              console.warn('Could not draw text:', err);
+              devWarn('Could not draw text:', err);
             }
           }
         } else if (annotation.type === 'text' && annotation.text) {
@@ -1344,6 +1354,23 @@ export default function PDFEditorSimple({ file, onReset, documentId, initialAnno
             y: height - annotation.y - annotation.height,
             width: annotation.width,
             height: annotation.height,
+          });
+        }
+      }
+
+      // Add watermark for free users
+      if (!isPremium) {
+        for (let i = 0; i < pages.length; i++) {
+          const page = pages[i];
+          const { width, height } = page.getSize();
+          const watermarkText = 'Created with PDFDocSign';
+          const watermarkSize = 10;
+          page.drawText(watermarkText, {
+            x: width - 180,
+            y: 12,
+            size: watermarkSize,
+            color: rgb(0.7, 0.7, 0.7),
+            opacity: 0.5,
           });
         }
       }
@@ -1526,9 +1553,9 @@ export default function PDFEditorSimple({ file, onReset, documentId, initialAnno
               renderTextLayer={false}
               renderAnnotationLayer={false}
               onRenderSuccess={(page) => {
-                console.log('Page rendered:', page);
+                devLog('Page rendered:', page);
                 const scale = page.width / page.originalWidth;
-                console.log('Calculated scale:', scale);
+                devLog('Calculated scale:', scale);
                 setPageScale(scale);
               }}
             />
@@ -1630,7 +1657,7 @@ export default function PDFEditorSimple({ file, onReset, documentId, initialAnno
                     onClick={(e) => {
                       e.stopPropagation();
                       e.preventDefault();
-                      console.log('🖱️ Checkbox clicked:', ann.id, 'Was:', ann.isChecked);
+                      devLog('🖱️ Checkbox clicked:', ann.id, 'Was:', ann.isChecked);
                       // Toggle checkbox
                       setAnnotations(prev =>
                         prev.map(a =>
@@ -1639,7 +1666,7 @@ export default function PDFEditorSimple({ file, onReset, documentId, initialAnno
                             : a
                         )
                       );
-                      console.log('🖱️ Now should be:', !ann.isChecked);
+                      devLog('🖱️ Now should be:', !ann.isChecked);
                     }}
                     onMouseDown={(e) => {
                       e.stopPropagation();
@@ -1973,7 +2000,7 @@ export default function PDFEditorSimple({ file, onReset, documentId, initialAnno
                           onClick={(e) => {
                             e.stopPropagation();
                             e.preventDefault();
-                            console.log('🗑️ Delete button clicked - Removing signature!');
+                            devLog('🗑️ Delete button clicked - Removing signature!');
 
                             setAnnotations(prev => prev.filter(a => a.id !== ann.id));
                             setSelectedSignatureId(null);
@@ -2019,7 +2046,7 @@ export default function PDFEditorSimple({ file, onReset, documentId, initialAnno
                           onClick={(e) => {
                             e.stopPropagation();
                             e.preventDefault();
-                            console.log('🖱️ Confirm button clicked - Signature locked!');
+                            devLog('🖱️ Confirm button clicked - Signature locked!');
 
                             setConfirmedSignatureIds(prev => new Set([...prev, ann.id]));
                             setSelectedSignatureId(null);
@@ -2088,8 +2115,30 @@ export default function PDFEditorSimple({ file, onReset, documentId, initialAnno
           </div>
         )}
 
+        {/* Form Fill Pro upsell for free users */}
+        {!isPremium && formFields.length === 0 && !isExtractingText && (
+          <div style={{ marginTop: '20px', padding: '16px', backgroundColor: '#faf5ff', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)', border: '1px solid #e0e7ff' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+              <div style={{ width: '28px', height: '28px', borderRadius: '6px', background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <span style={{ fontSize: '14px', color: 'white' }}>&#9733;</span>
+              </div>
+              <strong style={{ fontSize: '14px', color: '#4c1d95', fontWeight: '600' }}>Auto Form Fill</strong>
+              <span style={{ fontSize: '10px', fontWeight: '700', color: 'white', backgroundColor: '#7c3aed', borderRadius: '9999px', padding: '2px 8px' }}>PRO</span>
+            </div>
+            <div style={{ fontSize: '12px', color: '#6b21a8', marginBottom: '10px', lineHeight: '1.5' }}>
+              Automatically detect and fill form fields in your PDFs. Upgrade to Pro to unlock this feature.
+            </div>
+            <button
+              onClick={() => setShowPaywall(true)}
+              style={{ width: '100%', padding: '8px 16px', fontSize: '13px', fontWeight: '600', color: 'white', background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)', border: 'none', borderRadius: '8px', cursor: 'pointer' }}
+            >
+              Upgrade to Pro
+            </button>
+          </div>
+        )}
+
         {/* No Fields Found */}
-        {formFields.length === 0 && !isExtractingText && (
+        {isPremium && formFields.length === 0 && !isExtractingText && (
           <div style={{ marginTop: '20px', padding: '16px', backgroundColor: 'white', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)', border: '1px solid #e2e8f0' }}>
             <div style={{ fontSize: '13px', color: '#64748b', textAlign: 'center', lineHeight: '1.6' }}>
               No fillable form fields detected in this PDF.<br/>

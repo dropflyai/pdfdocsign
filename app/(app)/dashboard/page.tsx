@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { useDocuments } from '@/contexts/DocumentContext';
 import { usePremium } from '@/contexts/PremiumContext';
+import { useSubscription } from '@/contexts/SubscriptionContext';
 import SignatureRequestList from '@/components/app/SignatureRequestList';
 import type { DocumentRecord } from '@/lib/storage/documents';
 
@@ -14,15 +16,32 @@ const PDFEditor = dynamic(() => import('@/components/PDFEditorSimple'), {
 
 export default function DashboardPage() {
   const { documents, loading, error, fetchDocuments, uploadDocument, deleteDocument, getDocumentWithUrl } = useDocuments();
-  const { isPremium } = usePremium();
+  const { isPremium, usage, setShowPaywall, setPaywallMessage, refreshUsage } = usePremium();
+  const { refreshSubscription } = useSubscription();
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [currentDocument, setCurrentDocument] = useState<DocumentRecord | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [showSuccessToast, setShowSuccessToast] = useState(false);
 
   useEffect(() => {
     fetchDocuments();
   }, [fetchDocuments]);
+
+  // Handle post-checkout success redirect
+  useEffect(() => {
+    if (searchParams.get('success') === 'true') {
+      setShowSuccessToast(true);
+      refreshSubscription();
+      // Clean up URL params
+      router.replace('/dashboard', { scroll: false });
+      // Auto-dismiss after 6 seconds
+      const timer = setTimeout(() => setShowSuccessToast(false), 6000);
+      return () => clearTimeout(timer);
+    }
+  }, [searchParams, router, refreshSubscription]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -44,9 +63,18 @@ export default function DashboardPage() {
 
       setPdfFile(processedFile);
       setCurrentDocument(doc);
+      // Refresh usage after successful upload
+      refreshUsage();
     } catch (err) {
       console.error('Error uploading PDF:', err);
-      alert(err instanceof Error ? err.message : 'Failed to upload PDF');
+      const message = err instanceof Error ? err.message : 'Failed to upload PDF';
+      // Check if this is a document limit error and show paywall
+      if (message === 'Free plan limit reached') {
+        setPaywallMessage("You've used all 3 free documents this month. Upgrade to Pro for unlimited documents.");
+        setShowPaywall(true);
+      } else {
+        alert(message);
+      }
     } finally {
       setUploading(false);
     }
@@ -151,6 +179,29 @@ export default function DashboardPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Success toast after checkout */}
+      {showSuccessToast && (
+        <div className="fixed top-20 right-4 z-50 animate-in slide-in-from-right duration-300">
+          <div className="flex items-center gap-3 bg-green-900/90 border border-green-700 text-green-100 px-5 py-4 rounded-xl shadow-lg shadow-green-900/30 backdrop-blur-sm">
+            <svg className="w-6 h-6 text-green-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div>
+              <p className="font-semibold">Welcome to Pro!</p>
+              <p className="text-sm text-green-300">Your subscription is now active. Enjoy unlimited features.</p>
+            </div>
+            <button
+              onClick={() => setShowSuccessToast(false)}
+              className="ml-2 text-green-400 hover:text-green-200 transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Page header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-white">Dashboard</h1>
@@ -200,6 +251,61 @@ export default function DashboardPage() {
           />
         </label>
       </div>
+
+      {/* Free tier usage banner */}
+      {!isPremium && usage && (
+        <div className="mt-6 bg-[#0f0f0f] rounded-xl border border-zinc-800 p-4">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-zinc-300">
+              Documents this month
+            </span>
+            <span className="text-sm text-zinc-400">
+              {usage.documentsUsed} / {usage.documentsLimit ?? 'Unlimited'}
+            </span>
+          </div>
+          <div className="w-full bg-zinc-800 rounded-full h-2">
+            <div
+              className={`h-2 rounded-full transition-all ${
+                usage.documentsUsed >= (usage.documentsLimit ?? Infinity)
+                  ? 'bg-red-500'
+                  : usage.documentsUsed >= ((usage.documentsLimit ?? 3) - 1)
+                  ? 'bg-amber-500'
+                  : 'bg-purple-500'
+              }`}
+              style={{ width: `${Math.min(100, (usage.documentsUsed / (usage.documentsLimit ?? 3)) * 100)}%` }}
+            />
+          </div>
+          {usage.documentsUsed >= (usage.documentsLimit ?? Infinity) ? (
+            <div className="mt-3 flex items-center justify-between">
+              <p className="text-sm text-red-400">
+                Limit reached. Resets {usage.resetDate ? new Date(usage.resetDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric' }) : 'next month'}.
+              </p>
+              <button
+                onClick={() => {
+                  setPaywallMessage("You've used all 3 free documents this month. Upgrade to Pro for unlimited documents.");
+                  setShowPaywall(true);
+                }}
+                className="text-sm font-semibold text-purple-400 hover:text-purple-300 transition-colors"
+              >
+                Upgrade to Pro
+              </button>
+            </div>
+          ) : (
+            <p className="mt-2 text-xs text-zinc-500">
+              Free plan: {(usage.documentsLimit ?? 3) - usage.documentsUsed} document{(usage.documentsLimit ?? 3) - usage.documentsUsed !== 1 ? 's' : ''} remaining this month.{' '}
+              <button
+                onClick={() => {
+                  setPaywallMessage(null);
+                  setShowPaywall(true);
+                }}
+                className="text-purple-400 hover:text-purple-300 font-medium"
+              >
+                Upgrade for unlimited
+              </button>
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Recent documents */}
       <div className="mt-8">

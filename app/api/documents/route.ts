@@ -4,6 +4,7 @@ import { verifyAuthenticatedUser } from '@/lib/auth/verify-user';
 import { checkRateLimit, getClientIP, RATE_LIMITS } from '@/lib/security/rate-limit';
 import { logRateLimited, logDocumentEvent } from '@/lib/security/audit-log';
 import { uploadDocument, listDocuments } from '@/lib/storage/documents';
+import { checkDocumentLimit } from '@/lib/subscription/check';
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -62,6 +63,22 @@ export async function POST(request: NextRequest) {
     // Verify authentication
     const { user, error: authError } = await verifyAuthenticatedUser();
     if (authError) return authError;
+
+    // Check free tier document limit (3 docs/month)
+    const limitCheck = await checkDocumentLimit(supabaseAdmin, user!.id);
+    if (!limitCheck.allowed) {
+      return NextResponse.json(
+        {
+          error: 'Free plan limit reached',
+          code: 'DOCUMENT_LIMIT_REACHED',
+          documentsUsed: limitCheck.documentsUsed,
+          documentsLimit: limitCheck.documentsLimit,
+          resetDate: limitCheck.resetDate,
+          message: `You've reached your free plan limit of ${limitCheck.documentsLimit} documents this month. Upgrade to Pro for unlimited documents.`,
+        },
+        { status: 403 }
+      );
+    }
 
     // Parse form data
     const formData = await request.formData();

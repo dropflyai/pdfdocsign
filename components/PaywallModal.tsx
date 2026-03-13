@@ -4,10 +4,15 @@ import { useState } from 'react';
 import { useSubscription } from '@/contexts/SubscriptionContext';
 
 export default function PaywallModal() {
-  const { showPaywall, setShowPaywall, createCheckoutSession } = useSubscription();
+  const { showPaywall, setShowPaywall, paywallMessage, setPaywallMessage, createCheckoutSession } = useSubscription();
   const [loading, setLoading] = useState(false);
 
   if (!showPaywall) return null;
+
+  const handleClose = () => {
+    setShowPaywall(false);
+    setPaywallMessage(null);
+  };
 
   const handleUpgrade = async () => {
     setLoading(true);
@@ -37,7 +42,9 @@ export default function PaywallModal() {
             </svg>
           </div>
           <h2 className="text-2xl font-bold mb-2">Upgrade to Pro</h2>
-          <p className="text-indigo-100 text-sm">Unlock powerful features</p>
+          <p className="text-indigo-100 text-sm">
+            {paywallMessage || 'Unlock powerful features'}
+          </p>
         </div>
 
         {/* Features */}
@@ -52,6 +59,11 @@ export default function PaywallModal() {
               icon="📸"
               title="Scan & Create PDFs"
               description="Create PDFs from your camera or photos"
+            />
+            <Feature
+              icon="📄"
+              title="Unlimited Documents"
+              description="Free plan allows 3 docs/month. Go unlimited with Pro"
             />
             <Feature
               icon="☁️"
@@ -85,7 +97,7 @@ export default function PaywallModal() {
             {loading ? 'Loading...' : 'Start Free Trial'}
           </button>
           <button
-            onClick={() => setShowPaywall(false)}
+            onClick={handleClose}
             className="w-full py-3 text-gray-600 font-medium hover:text-gray-900 transition-colors"
           >
             Maybe Later

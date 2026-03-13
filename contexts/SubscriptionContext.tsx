@@ -17,16 +17,27 @@ interface Subscription {
   currentPeriodEnd: Date | null;
 }
 
+interface UsageInfo {
+  documentsUsed: number;
+  documentsLimit: number | null; // null = unlimited (pro)
+  canUpload: boolean;
+  resetDate: string | null;
+}
+
 interface SubscriptionContextType {
   subscription: Subscription | null;
   loading: boolean;
   isPro: boolean;
   isTrialing: boolean;
   showPaywall: boolean;
+  paywallMessage: string | null;
+  usage: UsageInfo | null;
   setShowPaywall: (show: boolean) => void;
+  setPaywallMessage: (message: string | null) => void;
   createCheckoutSession: (priceId?: string) => Promise<string | null>;
   createPortalSession: () => Promise<string | null>;
   refreshSubscription: () => Promise<void>;
+  refreshUsage: () => Promise<void>;
 }
 
 const SubscriptionContext = createContext<SubscriptionContextType | undefined>(undefined);
@@ -46,6 +57,8 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [loading, setLoading] = useState(true);
   const [showPaywall, setShowPaywall] = useState(false);
+  const [paywallMessage, setPaywallMessage] = useState<string | null>(null);
+  const [usage, setUsage] = useState<UsageInfo | null>(null);
   const supabase = createClient();
 
   const fetchSubscription = useCallback(async () => {
@@ -87,9 +100,32 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     }
   }, [user, supabase]);
 
+  const fetchUsage = useCallback(async () => {
+    if (!user) {
+      setUsage(null);
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/subscription/usage');
+      if (response.ok) {
+        const data = await response.json();
+        setUsage({
+          documentsUsed: data.documentsUsed,
+          documentsLimit: data.documentsLimit,
+          canUpload: data.canUpload,
+          resetDate: data.resetDate,
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching usage:', error);
+    }
+  }, [user]);
+
   useEffect(() => {
     fetchSubscription();
-  }, [fetchSubscription]);
+    fetchUsage();
+  }, [fetchSubscription, fetchUsage]);
 
   const createCheckoutSession = async (priceId?: string): Promise<string | null> => {
     if (!user) {
@@ -160,10 +196,14 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
         isPro,
         isTrialing,
         showPaywall,
+        paywallMessage,
+        usage,
         setShowPaywall,
+        setPaywallMessage,
         createCheckoutSession,
         createPortalSession,
         refreshSubscription: fetchSubscription,
+        refreshUsage: fetchUsage,
       }}
     >
       {children}
@@ -189,7 +229,11 @@ export function usePremium() {
   return {
     isPremium: context.isPro,
     showPaywall: context.showPaywall,
+    paywallMessage: context.paywallMessage,
+    usage: context.usage,
     setShowPaywall: context.setShowPaywall,
+    setPaywallMessage: context.setPaywallMessage,
+    refreshUsage: context.refreshUsage,
     upgradeToPremium: async () => {
       const url = await context.createCheckoutSession();
       if (url) {

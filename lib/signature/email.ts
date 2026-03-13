@@ -13,6 +13,16 @@ function getResendClient(): Resend {
   return resend;
 }
 
+/** Escape HTML special characters to prevent XSS / injection */
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 interface SendSignatureRequestEmailParams {
   to: string;
   recipientName?: string;
@@ -27,7 +37,14 @@ interface SendSignatureRequestEmailParams {
 export async function sendSignatureRequestEmail(params: SendSignatureRequestEmailParams): Promise<{ success: boolean; messageId?: string; error?: string }> {
   const { to, recipientName, senderName, senderEmail, documentName, message, signingUrl, expiresAt } = params;
 
-  const greeting = recipientName ? `Hi ${recipientName},` : 'Hello,';
+  // Sanitize all user-supplied fields to prevent HTML injection
+  const safeSenderName = escapeHtml(senderName);
+  const safeSenderEmail = escapeHtml(senderEmail);
+  const safeDocumentName = escapeHtml(documentName);
+  const safeRecipientName = recipientName ? escapeHtml(recipientName) : undefined;
+  const safeMessage = message ? escapeHtml(message) : undefined;
+
+  const greeting = safeRecipientName ? `Hi ${safeRecipientName},` : 'Hello,';
   const expiresFormatted = expiresAt.toLocaleDateString('en-US', {
     weekday: 'long',
     year: 'numeric',
@@ -40,7 +57,7 @@ export async function sendSignatureRequestEmail(params: SendSignatureRequestEmai
       from: 'PDF Doc Sign <noreply@pdfdocsign.com>',
       to: [to],
       replyTo: senderEmail,
-      subject: `${senderName} has requested your signature on "${documentName}"`,
+      subject: `${senderName} has requested your signature on "${documentName}"`,  // Subject is plain text, no HTML risk
       html: `
         <!DOCTYPE html>
         <html>
@@ -57,17 +74,17 @@ export async function sendSignatureRequestEmail(params: SendSignatureRequestEmai
             <p style="font-size: 16px; margin-bottom: 20px;">${greeting}</p>
 
             <p style="font-size: 16px; margin-bottom: 20px;">
-              <strong>${senderName}</strong> (${senderEmail}) has sent you a document to sign:
+              <strong>${safeSenderName}</strong> (${safeSenderEmail}) has sent you a document to sign:
             </p>
 
             <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
               <p style="margin: 0; font-size: 14px; color: #6b7280;">Document</p>
-              <p style="margin: 5px 0 0 0; font-size: 18px; font-weight: 600; color: #111827;">${documentName}</p>
+              <p style="margin: 5px 0 0 0; font-size: 18px; font-weight: 600; color: #111827;">${safeDocumentName}</p>
             </div>
 
-            ${message ? `
+            ${safeMessage ? `
             <div style="background: #f0fdf4; border-left: 4px solid #22c55e; padding: 15px; margin-bottom: 20px;">
-              <p style="margin: 0; font-size: 14px; color: #166534; font-style: italic;">"${message}"</p>
+              <p style="margin: 0; font-size: 14px; color: #166534; font-style: italic;">"${safeMessage}"</p>
             </div>
             ` : ''}
 
@@ -90,7 +107,7 @@ export async function sendSignatureRequestEmail(params: SendSignatureRequestEmai
             </p>
 
             <p style="font-size: 12px; color: #9ca3af;">
-              If you didn't expect this email, you can safely ignore it. If you have concerns, please contact ${senderEmail}.
+              If you didn't expect this email, you can safely ignore it. If you have concerns, please contact ${safeSenderEmail}.
             </p>
           </div>
 
