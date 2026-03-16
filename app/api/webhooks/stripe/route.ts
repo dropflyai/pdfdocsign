@@ -4,10 +4,12 @@ import { createClient } from '@supabase/supabase-js';
 import Stripe from 'stripe';
 import { logSubscriptionEvent } from '@/lib/security/audit-log';
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+function getSupabaseAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 
@@ -87,7 +89,7 @@ async function handleSubscriptionChange(subscription: Stripe.Subscription) {
 
   if (!userId) {
     // Try to find user by customer ID
-    const { data } = await supabaseAdmin
+    const { data } = await getSupabaseAdmin()
       .from('subscriptions')
       .select('user_id')
       .eq('stripe_customer_id', customerId)
@@ -108,7 +110,7 @@ async function handleSubscriptionChange(subscription: Stripe.Subscription) {
     current_period_end: number;
   };
 
-  await supabaseAdmin
+  await getSupabaseAdmin()
     .from('subscriptions')
     .upsert({
       user_id: userId,
@@ -142,13 +144,13 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
   const customerId = subscription.customer as string;
 
   // Get user_id before updating
-  const { data: existingSub } = await supabaseAdmin
+  const { data: existingSub } = await getSupabaseAdmin()
     .from('subscriptions')
     .select('user_id')
     .eq('stripe_customer_id', customerId)
     .single();
 
-  await supabaseAdmin
+  await getSupabaseAdmin()
     .from('subscriptions')
     .update({
       status: 'canceled',
@@ -171,7 +173,7 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
 async function handlePaymentFailed(invoice: Stripe.Invoice) {
   const customerId = invoice.customer as string;
 
-  await supabaseAdmin
+  await getSupabaseAdmin()
     .from('subscriptions')
     .update({
       status: 'past_due',

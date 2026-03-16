@@ -5,10 +5,12 @@ import { verifyAuthenticatedUser } from '@/lib/auth/verify-user';
 import { checkRateLimit, getClientIP, RATE_LIMITS } from '@/lib/security/rate-limit';
 import { logRateLimited } from '@/lib/security/audit-log';
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+function getSupabaseAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -25,7 +27,7 @@ export async function POST(request: NextRequest) {
     if (authError) return authError;
 
     // Get the user's Stripe customer ID from database - don't trust client-provided values
-    const { data: subscription, error: dbError } = await supabaseAdmin
+    const { data: subscription, error: dbError } = await getSupabaseAdmin()
       .from('subscriptions')
       .select('stripe_customer_id')
       .eq('user_id', user!.id)

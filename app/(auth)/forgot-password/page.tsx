@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import ForgotPasswordForm from '@/components/auth/ForgotPasswordForm';
 
 export const metadata = {

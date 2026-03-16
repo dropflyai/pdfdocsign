@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -117,11 +118,11 @@ export default function BillingPage() {
           {[
             'Unlimited documents',
             'Send for signature',
-            'Scan & create PDFs',
+            'Form field auto-detection',
             'Cloud storage',
-            'Template library',
+            'Custom download filenames',
             'Remove watermarks',
-            'Priority support',
+            'Email support',
           ].map((feature) => (
             <li key={feature} className="flex items-center gap-3">
               <svg className="w-5 h-5 text-purple-400" fill="currentColor" viewBox="0 0 20 20">

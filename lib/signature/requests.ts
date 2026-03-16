@@ -14,6 +14,7 @@ export interface SignatureRequest {
   signed_at: string | null;
   expires_at: string;
   created_at: string;
+  document_hash?: string | null;
 }
 
 export interface SignatureEvent {

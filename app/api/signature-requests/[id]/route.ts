@@ -5,10 +5,12 @@ import { checkRateLimit, getClientIP, RATE_LIMITS } from '@/lib/security/rate-li
 import { logRateLimited, logAccessDenied } from '@/lib/security/audit-log';
 import { getSignatureRequest, getSignatureEvents, deleteSignatureRequest } from '@/lib/signature/requests';
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+function getSupabaseAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -29,7 +31,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     const { user, error: authError } = await verifyAuthenticatedUser();
     if (authError) return authError;
 
-    const signatureRequest = await getSignatureRequest(supabaseAdmin, requestId);
+    const signatureRequest = await getSignatureRequest(getSupabaseAdmin(), requestId);
 
     if (!signatureRequest) {
       return NextResponse.json(
@@ -48,7 +50,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     // Get events for audit trail
-    const events = await getSignatureEvents(supabaseAdmin, requestId);
+    const events = await getSignatureEvents(getSupabaseAdmin(), requestId);
 
     return NextResponse.json({ request: signatureRequest, events });
   } catch (error) {
@@ -75,7 +77,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     const { user, error: authError } = await verifyAuthenticatedUser();
     if (authError) return authError;
 
-    const signatureRequest = await getSignatureRequest(supabaseAdmin, requestId);
+    const signatureRequest = await getSignatureRequest(getSupabaseAdmin(), requestId);
 
     if (!signatureRequest) {
       return NextResponse.json(
@@ -101,7 +103,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    await deleteSignatureRequest(supabaseAdmin, requestId);
+    await deleteSignatureRequest(getSupabaseAdmin(), requestId);
 
     return NextResponse.json({ success: true });
   } catch (error) {

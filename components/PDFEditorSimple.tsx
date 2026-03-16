@@ -1,11 +1,21 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { PDFDocument, rgb } from 'pdf-lib';
 import SignaturePad from 'signature_pad';
 import { usePremium } from '@/contexts/PremiumContext';
 import SendForSignatureModal from '@/components/app/SendForSignatureModal';
+
+type EditorSignatureMode = 'draw' | 'type' | 'upload' | 'saved';
+
+interface SavedSignature {
+  id: string;
+  name: string;
+  signature_data: string;
+  is_default: boolean;
+  created_at: string;
+}
 
 // Dev-only logger -- no-ops in production builds
 const isDev = process.env.NODE_ENV === 'development';
@@ -119,9 +129,17 @@ export default function PDFEditorSimple({ file, onReset, documentId, initialAnno
   const [showDownloadModal, setShowDownloadModal] = useState(false);
   const [downloadFilename, setDownloadFilename] = useState<string>('');
   const [showSendModal, setShowSendModal] = useState(false);
+  const [editorSigMode, setEditorSigMode] = useState<EditorSignatureMode>('draw');
+  const [editorTypedSig, setEditorTypedSig] = useState('');
+  const [editorUploadedSig, setEditorUploadedSig] = useState<string | null>(null);
+  const [savedSignatures, setSavedSignatures] = useState<SavedSignature[]>([]);
+  const [showSavePrompt, setShowSavePrompt] = useState(false);
+  const [pendingSaveData, setPendingSaveData] = useState<string | null>(null);
+  const [saveSigName, setSaveSigName] = useState('');
 
   const signatureCanvasRef = useRef<HTMLCanvasElement>(null);
   const signaturePadRef = useRef<SignaturePad | null>(null);
+  const sigUploadInputRef = useRef<HTMLInputElement>(null);
   const pdfContainerRef = useRef<HTMLDivElement>(null);
   const justFinishedResizingRef = useRef<boolean>(false);
 
@@ -350,7 +368,7 @@ export default function PDFEditorSimple({ file, onReset, documentId, initialAnno
   }, [draggingId, resizingId, dragOffset, resizeStart, pageScale]);
 
   useEffect(() => {
-    if (showSignatureModal && signatureCanvasRef.current) {
+    if (showSignatureModal && editorSigMode === 'draw' && signatureCanvasRef.current) {
       const canvas = signatureCanvasRef.current;
       const ctx = canvas.getContext('2d');
 
@@ -364,7 +382,97 @@ export default function PDFEditorSimple({ file, onReset, documentId, initialAnno
         backgroundColor: 'rgb(255, 255, 255)',  // White background for drawing
       });
     }
+  }, [showSignatureModal, editorSigMode]);
+
+  // Load saved signatures when modal opens
+  useEffect(() => {
+    if (showSignatureModal) {
+      fetchSavedSignatures();
+    }
   }, [showSignatureModal]);
+
+  const fetchSavedSignatures = async () => {
+    try {
+      const res = await fetch('/api/signatures');
+      if (res.ok) {
+        const data = await res.json();
+        setSavedSignatures(data.signatures || []);
+      }
+    } catch {
+      // Non-critical, silently fail
+    }
+  };
+
+  const handleSaveSignature = async (signatureData: string, name?: string) => {
+    try {
+      const res = await fetch('/api/signatures', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ signatureData, name: name || 'My Signature' }),
+      });
+      if (res.ok) {
+        await fetchSavedSignatures();
+      }
+    } catch {
+      // Non-critical
+    }
+  };
+
+  const handleDeleteSavedSignature = async (id: string) => {
+    try {
+      const res = await fetch(`/api/signatures?id=${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        setSavedSignatures(prev => prev.filter(s => s.id !== id));
+      }
+    } catch {
+      // Non-critical
+    }
+  };
+
+  const handleEditorUploadSignature = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const uploadedFile = e.target.files?.[0];
+    if (!uploadedFile) return;
+    if (!uploadedFile.type.startsWith('image/')) {
+      alert('Please upload a PNG or JPG image');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d')!;
+        ctx.drawImage(img, 0, 0);
+        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const pixels = imgData.data;
+        for (let i = 0; i < pixels.length; i += 4) {
+          if (pixels[i] > 240 && pixels[i + 1] > 240 && pixels[i + 2] > 240) {
+            pixels[i + 3] = 0;
+          }
+        }
+        ctx.putImageData(imgData, 0, 0);
+        setEditorUploadedSig(canvas.toDataURL('image/png'));
+      };
+      img.src = reader.result as string;
+    };
+    reader.readAsDataURL(uploadedFile);
+  };
+
+  const getEditorTypedSignatureData = useCallback((): string | null => {
+    if (!editorTypedSig.trim()) return null;
+    const canvas = document.createElement('canvas');
+    canvas.width = 350;
+    canvas.height = 100;
+    const ctx = canvas.getContext('2d')!;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#000000';
+    ctx.font = '40px "Dancing Script", cursive';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(editorTypedSig, 10, 50);
+    return canvas.toDataURL('image/png');
+  }, [editorTypedSig]);
 
   const onDocumentLoadSuccess = async ({ numPages }: { numPages: number }) => {
     try {
@@ -1018,42 +1126,71 @@ export default function PDFEditorSimple({ file, onReset, documentId, initialAnno
   };
 
   const saveSignature = () => {
-    if (!signaturePadRef.current || signaturePadRef.current.isEmpty() || !pendingSignaturePos) {
-      alert('Please draw a signature first');
+    if (!pendingSignaturePos) {
+      alert('No signature position set');
       return;
     }
 
-    // Create a temporary canvas to extract signature with transparent background
-    const tempCanvas = document.createElement('canvas');
-    const sourceCanvas = signatureCanvasRef.current;
-    if (!sourceCanvas) return;
+    let transparentImageData: string | null = null;
 
-    tempCanvas.width = sourceCanvas.width;
-    tempCanvas.height = sourceCanvas.height;
-    const tempCtx = tempCanvas.getContext('2d');
-    if (!tempCtx) return;
-
-    // Draw the signature from the source canvas
-    tempCtx.drawImage(sourceCanvas, 0, 0);
-
-    // Get image data and make white pixels transparent
-    const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
-    const data = imageData.data;
-
-    for (let i = 0; i < data.length; i += 4) {
-      const r = data[i];
-      const g = data[i + 1];
-      const b = data[i + 2];
-
-      // If pixel is white or very close to white, make it transparent
-      if (r > 250 && g > 250 && b > 250) {
-        data[i + 3] = 0; // Set alpha to 0 (transparent)
+    if (editorSigMode === 'draw') {
+      if (!signaturePadRef.current || signaturePadRef.current.isEmpty()) {
+        alert('Please draw a signature first');
+        return;
       }
+      const tempCanvas = document.createElement('canvas');
+      const sourceCanvas = signatureCanvasRef.current;
+      if (!sourceCanvas) return;
+      tempCanvas.width = sourceCanvas.width;
+      tempCanvas.height = sourceCanvas.height;
+      const tempCtx = tempCanvas.getContext('2d');
+      if (!tempCtx) return;
+      tempCtx.drawImage(sourceCanvas, 0, 0);
+      const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+      const data = imageData.data;
+      for (let i = 0; i < data.length; i += 4) {
+        if (data[i] > 250 && data[i + 1] > 250 && data[i + 2] > 250) {
+          data[i + 3] = 0;
+        }
+      }
+      tempCtx.putImageData(imageData, 0, 0);
+      transparentImageData = tempCanvas.toDataURL('image/png');
+    } else if (editorSigMode === 'type') {
+      transparentImageData = getEditorTypedSignatureData();
+      if (!transparentImageData) {
+        alert('Please type your signature');
+        return;
+      }
+    } else if (editorSigMode === 'upload') {
+      transparentImageData = editorUploadedSig;
+      if (!transparentImageData) {
+        alert('Please upload a signature image');
+        return;
+      }
+    } else if (editorSigMode === 'saved') {
+      alert('Please select a saved signature');
+      return;
     }
 
-    tempCtx.putImageData(imageData, 0, 0);
-    const transparentImageData = tempCanvas.toDataURL('image/png');
+    if (!transparentImageData) return;
 
+    addSignatureAnnotation(transparentImageData);
+
+    // Ask to save for reuse
+    setPendingSaveData(transparentImageData);
+    setShowSavePrompt(true);
+  };
+
+  const applySavedSignature = (signatureData: string) => {
+    if (!pendingSignaturePos) return;
+    addSignatureAnnotation(signatureData);
+    setShowSignatureModal(false);
+    setPendingSignaturePos(null);
+    setSelectedTool('select');
+  };
+
+  const addSignatureAnnotation = (imageData: string) => {
+    if (!pendingSignaturePos) return;
     const newAnnotation: Annotation = {
       id: Date.now().toString(),
       type: 'signature',
@@ -1062,7 +1199,7 @@ export default function PDFEditorSimple({ file, onReset, documentId, initialAnno
       width: 200,
       height: 100,
       pageNumber: currentPage,
-      imageData: transparentImageData,
+      imageData,
     };
 
     devLog('Creating signature annotation:', newAnnotation);
@@ -1076,6 +1213,8 @@ export default function PDFEditorSimple({ file, onReset, documentId, initialAnno
     setPendingSignaturePos(null);
     setSelectedTool('select');
     if (signaturePadRef.current) signaturePadRef.current.clear();
+    setEditorTypedSig('');
+    setEditorUploadedSig(null);
   };
 
   const updateAnnotationText = (id: string, text: string) => {
@@ -2172,32 +2311,188 @@ export default function PDFEditorSimple({ file, onReset, documentId, initialAnno
       {/* Signature Modal */}
       {showSignatureModal && (
         <div className="fixed inset-0 flex items-center justify-center" style={{ zIndex: 99999, backgroundColor: 'rgba(0, 0, 0, 0.15)' }}>
-          <div className="bg-white rounded-lg p-4 w-full mx-4 shadow-2xl border border-gray-300" style={{ maxWidth: '400px' }}>
-            <h3 className="text-base font-semibold mb-2 text-gray-800">Draw Your Signature</h3>
-            <div className="border-2 border-gray-300 rounded-lg overflow-hidden">
-              <canvas ref={signatureCanvasRef} width={350} height={100} className="w-full" />
+          <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&display=swap" rel="stylesheet" />
+          <div className="bg-white rounded-lg p-4 w-full mx-4 shadow-2xl border border-gray-300" style={{ maxWidth: '450px' }}>
+            <h3 className="text-base font-semibold mb-3 text-gray-800">Add Signature</h3>
+
+            {/* Mode tabs */}
+            <div className="flex rounded-lg overflow-hidden border border-gray-300 mb-3">
+              {(['draw', 'type', 'upload', ...(savedSignatures.length > 0 ? ['saved'] : [])] as EditorSignatureMode[]).map((mode) => (
+                <button
+                  key={mode}
+                  onClick={() => setEditorSigMode(mode)}
+                  className={`flex-1 px-3 py-1.5 text-xs font-medium transition-colors ${
+                    editorSigMode === mode
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  {mode === 'draw' ? 'Draw' : mode === 'type' ? 'Type' : mode === 'upload' ? 'Upload' : 'Saved'}
+                </button>
+              ))}
             </div>
-            <div className="flex gap-3 mt-4">
+
+            {/* Draw mode */}
+            {editorSigMode === 'draw' && (
+              <div>
+                <div className="border-2 border-gray-300 rounded-lg overflow-hidden">
+                  <canvas ref={signatureCanvasRef} width={350} height={100} className="w-full" />
+                </div>
+                <button
+                  onClick={() => signaturePadRef.current?.clear()}
+                  className="mt-1 text-xs text-blue-600 hover:text-blue-700"
+                >
+                  Clear
+                </button>
+              </div>
+            )}
+
+            {/* Type mode */}
+            {editorSigMode === 'type' && (
+              <div>
+                <input
+                  type="text"
+                  value={editorTypedSig}
+                  onChange={(e) => setEditorTypedSig(e.target.value)}
+                  placeholder="Type your name"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2 text-sm"
+                />
+                {editorTypedSig && (
+                  <div className="border-2 border-gray-300 rounded-lg bg-white p-4 flex items-center justify-center min-h-[80px]">
+                    <span style={{ fontFamily: "'Dancing Script', cursive", fontSize: '40px', color: '#000' }}>
+                      {editorTypedSig}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Upload mode */}
+            {editorSigMode === 'upload' && (
+              <div>
+                <input
+                  ref={sigUploadInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/jpg"
+                  onChange={handleEditorUploadSignature}
+                  className="hidden"
+                />
+                {editorUploadedSig ? (
+                  <div className="border-2 border-gray-300 rounded-lg bg-white p-3 flex flex-col items-center">
+                    <img src={editorUploadedSig} alt="Uploaded signature" className="max-h-[80px] max-w-full object-contain" />
+                    <button
+                      onClick={() => { setEditorUploadedSig(null); if (sigUploadInputRef.current) sigUploadInputRef.current.value = ''; }}
+                      className="mt-1 text-xs text-blue-600 hover:text-blue-700"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => sigUploadInputRef.current?.click()}
+                    className="w-full border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-500 transition-colors"
+                  >
+                    <p className="text-sm text-gray-500">Click to upload PNG/JPG</p>
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* Saved signatures mode */}
+            {editorSigMode === 'saved' && (
+              <div className="max-h-[200px] overflow-y-auto space-y-2">
+                {savedSignatures.length === 0 ? (
+                  <p className="text-sm text-gray-500 text-center py-4">No saved signatures yet</p>
+                ) : (
+                  savedSignatures.map((sig) => (
+                    <div
+                      key={sig.id}
+                      className="border border-gray-200 rounded-lg p-2 flex items-center gap-3 hover:border-blue-400 cursor-pointer transition-colors group"
+                      onClick={() => applySavedSignature(sig.signature_data)}
+                    >
+                      <img src={sig.signature_data} alt={sig.name} className="h-[40px] max-w-[150px] object-contain bg-white rounded" />
+                      <span className="text-xs text-gray-600 flex-1">{sig.name}</span>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleDeleteSavedSignature(sig.id); }}
+                        className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity text-xs"
+                        title="Delete"
+                      >
+                        X
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+
+            {/* Action buttons (not shown for 'saved' mode - clicking a saved sig applies it) */}
+            {editorSigMode !== 'saved' && (
+              <div className="flex gap-3 mt-4">
+                <button
+                  onClick={() => {
+                    setShowSignatureModal(false);
+                    setPendingSignaturePos(null);
+                  }}
+                  className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={saveSignature}
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                >
+                  Add Signature
+                </button>
+              </div>
+            )}
+
+            {editorSigMode === 'saved' && (
+              <div className="flex gap-3 mt-4">
+                <button
+                  onClick={() => {
+                    setShowSignatureModal(false);
+                    setPendingSignaturePos(null);
+                  }}
+                  className="w-full px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Save Signature Prompt */}
+      {showSavePrompt && pendingSaveData && (
+        <div className="fixed inset-0 flex items-center justify-center" style={{ zIndex: 100000, backgroundColor: 'rgba(0, 0, 0, 0.2)' }}>
+          <div className="bg-white rounded-lg p-4 w-full mx-4 shadow-2xl border border-gray-300" style={{ maxWidth: '350px' }}>
+            <h3 className="text-base font-semibold mb-2 text-gray-800">Save this signature?</h3>
+            <p className="text-sm text-gray-500 mb-3">Save for quick reuse on future documents.</p>
+            <input
+              type="text"
+              value={saveSigName}
+              onChange={(e) => setSaveSigName(e.target.value)}
+              placeholder="Signature name (e.g. My Signature)"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-3 text-sm"
+            />
+            <div className="flex gap-2">
               <button
-                onClick={() => signaturePadRef.current?.clear()}
-                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                onClick={() => { setShowSavePrompt(false); setPendingSaveData(null); setSaveSigName(''); }}
+                className="flex-1 px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 text-sm"
               >
-                Clear
+                Skip
               </button>
               <button
                 onClick={() => {
-                  setShowSignatureModal(false);
-                  setPendingSignaturePos(null);
+                  handleSaveSignature(pendingSaveData!, saveSigName || 'My Signature');
+                  setShowSavePrompt(false);
+                  setPendingSaveData(null);
+                  setSaveSigName('');
                 }}
-                className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                className="flex-1 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
               >
-                Cancel
-              </button>
-              <button
-                onClick={saveSignature}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-              >
-                Add Signature
+                Save
               </button>
             </div>
           </div>

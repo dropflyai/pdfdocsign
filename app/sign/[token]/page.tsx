@@ -1,18 +1,20 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { Document, Page, pdfjs } from 'react-pdf';
 import SignaturePad from 'signature_pad';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 
+type SignatureMode = 'draw' | 'type' | 'upload';
+
 pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.mjs`;
 
 interface SigningData {
   request: {
     id: string;
-    recipientEmail: string;
+    maskedEmail: string;
     recipientName: string | null;
     message: string | null;
     status: string;
@@ -22,6 +24,7 @@ interface SigningData {
     id: string;
     name: string;
     downloadUrl: string;
+    annotations: Array<{ type: string; [key: string]: unknown }>;
   };
   sender: {
     name: string;
@@ -40,19 +43,24 @@ export default function SigningPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [showSignatureModal, setShowSignatureModal] = useState(false);
   const [signerName, setSignerName] = useState('');
+  const [signerEmail, setSignerEmail] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [signed, setSigned] = useState(false);
   const [signedAt, setSignedAt] = useState<string | null>(null);
+  const [signatureMode, setSignatureMode] = useState<SignatureMode>('draw');
+  const [typedSignature, setTypedSignature] = useState('');
+  const [uploadedSignature, setUploadedSignature] = useState<string | null>(null);
 
   const signatureCanvasRef = useRef<HTMLCanvasElement>(null);
   const signaturePadRef = useRef<SignaturePad | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     loadSigningRequest();
   }, [token]);
 
   useEffect(() => {
-    if (showSignatureModal && signatureCanvasRef.current) {
+    if (showSignatureModal && signatureMode === 'draw' && signatureCanvasRef.current) {
       const canvas = signatureCanvasRef.current;
       const ctx = canvas.getContext('2d');
       if (ctx) {
@@ -63,7 +71,7 @@ export default function SigningPage() {
         backgroundColor: 'rgb(255, 255, 255)',
       });
     }
-  }, [showSignatureModal]);
+  }, [showSignatureModal, signatureMode]);
 
   const loadSigningRequest = async () => {
     try {
@@ -91,37 +99,106 @@ export default function SigningPage() {
     }
   };
 
-  const handleSign = async () => {
-    if (!signaturePadRef.current || signaturePadRef.current.isEmpty()) {
-      alert('Please draw your signature');
+  const getDrawSignatureData = useCallback((): string | null => {
+    if (!signaturePadRef.current || signaturePadRef.current.isEmpty()) return null;
+    const canvas = signatureCanvasRef.current!;
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = canvas.width;
+    tempCanvas.height = canvas.height;
+    const tempCtx = tempCanvas.getContext('2d')!;
+    tempCtx.drawImage(canvas, 0, 0);
+    const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+    const data = imageData.data;
+    for (let i = 0; i < data.length; i += 4) {
+      if (data[i] > 250 && data[i + 1] > 250 && data[i + 2] > 250) {
+        data[i + 3] = 0;
+      }
+    }
+    tempCtx.putImageData(imageData, 0, 0);
+    return tempCanvas.toDataURL('image/png');
+  }, []);
+
+  const getTypedSignatureData = useCallback((): string | null => {
+    if (!typedSignature.trim()) return null;
+    const canvas = document.createElement('canvas');
+    canvas.width = 450;
+    canvas.height = 150;
+    const ctx = canvas.getContext('2d')!;
+    // Transparent background
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#000000';
+    ctx.font = '48px "Dancing Script", cursive';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(typedSignature, 20, 75);
+    return canvas.toDataURL('image/png');
+  }, [typedSignature]);
+
+  const handleUploadSignature = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      alert('Please upload a PNG or JPG image');
       return;
     }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        // Convert to transparent background
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d')!;
+        ctx.drawImage(img, 0, 0);
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imageData.data;
+        for (let i = 0; i < data.length; i += 4) {
+          if (data[i] > 240 && data[i + 1] > 240 && data[i + 2] > 240) {
+            data[i + 3] = 0;
+          }
+        }
+        ctx.putImageData(imageData, 0, 0);
+        setUploadedSignature(canvas.toDataURL('image/png'));
+      };
+      img.src = reader.result as string;
+    };
+    reader.readAsDataURL(file);
+  };
 
+  const handleSign = async () => {
     if (!signerName.trim()) {
       alert('Please enter your name');
       return;
     }
 
+    if (!signerEmail.trim()) {
+      alert('Please enter your email for verification');
+      return;
+    }
+
+    let signatureData: string | null = null;
+    if (signatureMode === 'draw') {
+      signatureData = getDrawSignatureData();
+      if (!signatureData) {
+        alert('Please draw your signature');
+        return;
+      }
+    } else if (signatureMode === 'type') {
+      signatureData = getTypedSignatureData();
+      if (!signatureData) {
+        alert('Please type your signature');
+        return;
+      }
+    } else if (signatureMode === 'upload') {
+      signatureData = uploadedSignature;
+      if (!signatureData) {
+        alert('Please upload a signature image');
+        return;
+      }
+    }
+
     try {
       setSubmitting(true);
-
-      // Get signature as PNG with transparent background
-      const canvas = signatureCanvasRef.current!;
-      const tempCanvas = document.createElement('canvas');
-      tempCanvas.width = canvas.width;
-      tempCanvas.height = canvas.height;
-      const tempCtx = tempCanvas.getContext('2d')!;
-      tempCtx.drawImage(canvas, 0, 0);
-
-      const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
-      const data = imageData.data;
-      for (let i = 0; i < data.length; i += 4) {
-        if (data[i] > 250 && data[i + 1] > 250 && data[i + 2] > 250) {
-          data[i + 3] = 0;
-        }
-      }
-      tempCtx.putImageData(imageData, 0, 0);
-      const signatureData = tempCanvas.toDataURL('image/png');
 
       const response = await fetch(`/api/sign/${token}`, {
         method: 'POST',
@@ -129,12 +206,13 @@ export default function SigningPage() {
         body: JSON.stringify({
           signatureData,
           signerName: signerName.trim(),
+          signerEmail: signerEmail.trim(),
         }),
       });
 
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to submit signature');
+        const respData = await response.json();
+        throw new Error(respData.error || 'Failed to submit signature');
       }
 
       const result = await response.json();
@@ -313,9 +391,11 @@ export default function SigningPage() {
       {/* Signature Modal */}
       {showSignatureModal && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&family=Great+Vibes&display=swap" rel="stylesheet" />
           <div className="bg-[#0f0f0f] rounded-2xl border border-zinc-800 p-6 w-full max-w-lg">
             <h2 className="text-xl font-bold text-white mb-4">Sign Document</h2>
 
+            {/* Name field */}
             <div className="mb-4">
               <label className="block text-sm font-medium text-zinc-400 mb-2">
                 Your Full Name
@@ -329,24 +409,125 @@ export default function SigningPage() {
               />
             </div>
 
+            {/* Email field */}
             <div className="mb-4">
               <label className="block text-sm font-medium text-zinc-400 mb-2">
-                Draw Your Signature
+                Your Email {signingData?.request.maskedEmail && (
+                  <span className="text-zinc-500 font-normal">(must match {signingData.request.maskedEmail})</span>
+                )}
               </label>
-              <div className="border-2 border-zinc-700 rounded-lg overflow-hidden bg-white">
-                <canvas
-                  ref={signatureCanvasRef}
-                  width={450}
-                  height={150}
-                  className="w-full touch-none"
-                />
+              <input
+                type="email"
+                value={signerEmail}
+                onChange={(e) => setSignerEmail(e.target.value)}
+                placeholder="Enter your email address"
+                className="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              />
+            </div>
+
+            {/* Signature mode tabs */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-zinc-400 mb-2">
+                Your Signature
+              </label>
+              <div className="flex rounded-lg overflow-hidden border border-zinc-700 mb-3">
+                {(['draw', 'type', 'upload'] as SignatureMode[]).map((mode) => (
+                  <button
+                    key={mode}
+                    onClick={() => setSignatureMode(mode)}
+                    className={`flex-1 px-4 py-2 text-sm font-medium transition-colors ${
+                      signatureMode === mode
+                        ? 'bg-purple-600 text-white'
+                        : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
+                    }`}
+                  >
+                    {mode === 'draw' ? 'Draw' : mode === 'type' ? 'Type' : 'Upload'}
+                  </button>
+                ))}
               </div>
-              <button
-                onClick={() => signaturePadRef.current?.clear()}
-                className="mt-2 text-sm text-purple-400 hover:text-purple-300"
-              >
-                Clear signature
-              </button>
+
+              {/* Draw mode */}
+              {signatureMode === 'draw' && (
+                <div>
+                  <div className="border-2 border-zinc-700 rounded-lg overflow-hidden bg-white">
+                    <canvas
+                      ref={signatureCanvasRef}
+                      width={450}
+                      height={150}
+                      className="w-full touch-none"
+                    />
+                  </div>
+                  <button
+                    onClick={() => signaturePadRef.current?.clear()}
+                    className="mt-2 text-sm text-purple-400 hover:text-purple-300"
+                  >
+                    Clear signature
+                  </button>
+                </div>
+              )}
+
+              {/* Type mode */}
+              {signatureMode === 'type' && (
+                <div>
+                  <input
+                    type="text"
+                    value={typedSignature}
+                    onChange={(e) => setTypedSignature(e.target.value)}
+                    placeholder="Type your name"
+                    className="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-purple-500 mb-3"
+                  />
+                  {typedSignature && (
+                    <div className="border-2 border-zinc-700 rounded-lg bg-white p-6 flex items-center justify-center min-h-[100px]">
+                      <span
+                        style={{ fontFamily: "'Dancing Script', cursive", fontSize: '48px', color: '#000' }}
+                      >
+                        {typedSignature}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Upload mode */}
+              {signatureMode === 'upload' && (
+                <div>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/png,image/jpeg,image/jpg"
+                    onChange={handleUploadSignature}
+                    className="hidden"
+                  />
+                  {uploadedSignature ? (
+                    <div className="border-2 border-zinc-700 rounded-lg bg-white p-4 flex flex-col items-center">
+                      <img
+                        src={uploadedSignature}
+                        alt="Uploaded signature"
+                        className="max-h-[120px] max-w-full object-contain"
+                      />
+                      <button
+                        onClick={() => {
+                          setUploadedSignature(null);
+                          if (fileInputRef.current) fileInputRef.current.value = '';
+                        }}
+                        className="mt-2 text-sm text-purple-400 hover:text-purple-300"
+                      >
+                        Remove and re-upload
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      className="w-full border-2 border-dashed border-zinc-700 rounded-lg p-8 text-center hover:border-purple-500 transition-colors"
+                    >
+                      <svg className="w-8 h-8 text-zinc-500 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      <p className="text-sm text-zinc-400">Click to upload a PNG or JPG of your signature</p>
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="bg-zinc-800/50 rounded-lg p-3 mb-4">

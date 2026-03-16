@@ -5,10 +5,12 @@ import { checkRateLimit, getClientIP, RATE_LIMITS } from '@/lib/security/rate-li
 import { logRateLimited, logDocumentEvent, logAccessDenied } from '@/lib/security/audit-log';
 import { getDocument, updateDocument, deleteDocument, getDocumentDownloadUrl } from '@/lib/storage/documents';
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+function getSupabaseAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -32,7 +34,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     if (authError) return authError;
 
     // Get document
-    const document = await getDocument(supabaseAdmin, documentId);
+    const document = await getDocument(getSupabaseAdmin(), documentId);
 
     if (!document) {
       return NextResponse.json(
@@ -53,7 +55,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     // Get signed download URL
     let downloadUrl = null;
     if (document.storage_path) {
-      downloadUrl = await getDocumentDownloadUrl(supabaseAdmin, document.storage_path);
+      downloadUrl = await getDocumentDownloadUrl(getSupabaseAdmin(), document.storage_path);
     }
 
     // Audit log
@@ -87,7 +89,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     if (authError) return authError;
 
     // Get existing document to verify ownership
-    const existingDoc = await getDocument(supabaseAdmin, documentId);
+    const existingDoc = await getDocument(getSupabaseAdmin(), documentId);
 
     if (!existingDoc) {
       return NextResponse.json(
@@ -109,7 +111,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     const { name, status, annotations, pageCount } = body;
 
     // Update document
-    const document = await updateDocument(supabaseAdmin, documentId, {
+    const document = await updateDocument(getSupabaseAdmin(), documentId, {
       name,
       status,
       annotations,
@@ -144,7 +146,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     if (authError) return authError;
 
     // Get existing document to verify ownership
-    const existingDoc = await getDocument(supabaseAdmin, documentId);
+    const existingDoc = await getDocument(getSupabaseAdmin(), documentId);
 
     if (!existingDoc) {
       return NextResponse.json(
@@ -162,7 +164,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     }
 
     // Delete document
-    await deleteDocument(supabaseAdmin, documentId);
+    await deleteDocument(getSupabaseAdmin(), documentId);
 
     // Audit log
     await logDocumentEvent('document.deleted', request, user!.id, documentId, {

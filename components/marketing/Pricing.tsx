@@ -81,11 +81,11 @@ export default function Pricing() {
                   'Unlimited documents',
                   'Send for signature',
                   'Cloud storage',
-                  'Template library',
-                  'Scan to PDF',
+                  'Form field auto-detection',
+                  'Custom download filenames',
                   'Remove watermarks',
-                  'Priority support',
-                  'Team sharing',
+                  'Email support',
+                  'Audit trail on signed documents',
                 ].map((feature) => (
                   <div key={feature} className="flex items-center gap-3 text-zinc-300">
                     <svg className="w-5 h-5 text-violet-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">

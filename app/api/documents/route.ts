@@ -6,10 +6,12 @@ import { logRateLimited, logDocumentEvent } from '@/lib/security/audit-log';
 import { uploadDocument, listDocuments } from '@/lib/storage/documents';
 import { checkDocumentLimit } from '@/lib/subscription/check';
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+function getSupabaseAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 // GET /api/documents - List user's documents
 export async function GET(request: NextRequest) {
@@ -33,7 +35,7 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status') as 'draft' | 'signed' | 'sent' | 'completed' | null;
 
     // Get documents
-    const { documents, total } = await listDocuments(supabaseAdmin, user!.id, {
+    const { documents, total } = await listDocuments(getSupabaseAdmin(), user!.id, {
       limit: Math.min(limit, 100), // Cap at 100
       offset,
       status: status || undefined,
@@ -65,7 +67,7 @@ export async function POST(request: NextRequest) {
     if (authError) return authError;
 
     // Check free tier document limit (3 docs/month)
-    const limitCheck = await checkDocumentLimit(supabaseAdmin, user!.id);
+    const limitCheck = await checkDocumentLimit(getSupabaseAdmin(), user!.id);
     if (!limitCheck.allowed) {
       return NextResponse.json(
         {
@@ -100,8 +102,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate PDF magic bytes (%PDF-)
+    const headerBytes = new Uint8Array(await file.slice(0, 5).arrayBuffer());
+    const pdfMagic = String.fromCharCode(...headerBytes);
+    if (!pdfMagic.startsWith('%PDF-')) {
+      return NextResponse.json(
+        { error: 'Invalid PDF file: file does not start with PDF magic bytes' },
+        { status: 400 }
+      );
+    }
+
     // Upload document
-    const document = await uploadDocument(supabaseAdmin, user!.id, {
+    const document = await uploadDocument(getSupabaseAdmin(), user!.id, {
       name: name || file.name,
       file,
       pageCount,

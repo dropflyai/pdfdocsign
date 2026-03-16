@@ -2,14 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { checkRateLimit, getClientIP, RATE_LIMITS } from '@/lib/security/rate-limit';
 import { getSignatureRequestByToken, updateSignatureRequestStatus, logSignatureEvent, isExpired } from '@/lib/signature/requests';
-import { getDocumentDownloadUrl } from '@/lib/storage/documents';
+import { getDocumentDownloadUrl, downloadDocument } from '@/lib/storage/documents';
 import { sendSignatureCompletedEmail } from '@/lib/signature/email';
 import { createHash } from 'crypto';
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+function getSupabaseAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 interface RouteParams {
   params: Promise<{ token: string }>;
@@ -36,7 +38,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     // Get signature request by token
-    const signatureRequest = await getSignatureRequestByToken(supabaseAdmin, token);
+    const signatureRequest = await getSignatureRequestByToken(getSupabaseAdmin(), token);
 
     if (!signatureRequest) {
       return NextResponse.json(
@@ -47,8 +49,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     // Check if expired
     if (isExpired(signatureRequest)) {
-      await updateSignatureRequestStatus(supabaseAdmin, signatureRequest.id, 'expired');
-      await logSignatureEvent(supabaseAdmin, signatureRequest.id, 'expired', {
+      await updateSignatureRequestStatus(getSupabaseAdmin(), signatureRequest.id, 'expired');
+      await logSignatureEvent(getSupabaseAdmin(), signatureRequest.id, 'expired', {
         ipAddress: clientIP,
         userAgent: request.headers.get('user-agent') || undefined,
       });
@@ -67,7 +69,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     // Get document info
-    const { data: document } = await supabaseAdmin
+    const { data: document } = await getSupabaseAdmin()
       .from('documents')
       .select('id, name, storage_path, annotations')
       .eq('id', signatureRequest.document_id)
@@ -81,28 +83,33 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     // Get sender info
-    const { data: sender } = await supabaseAdmin
+    const { data: sender } = await getSupabaseAdmin()
       .from('profiles')
       .select('full_name')
       .eq('id', signatureRequest.sender_id)
       .single();
 
     // Get download URL for the PDF
-    const downloadUrl = await getDocumentDownloadUrl(supabaseAdmin, document.storage_path);
+    const downloadUrl = await getDocumentDownloadUrl(getSupabaseAdmin(), document.storage_path);
 
     // Log view event if first time viewing
     if (signatureRequest.status === 'pending') {
-      await updateSignatureRequestStatus(supabaseAdmin, signatureRequest.id, 'viewed');
-      await logSignatureEvent(supabaseAdmin, signatureRequest.id, 'viewed', {
+      await updateSignatureRequestStatus(getSupabaseAdmin(), signatureRequest.id, 'viewed');
+      await logSignatureEvent(getSupabaseAdmin(), signatureRequest.id, 'viewed', {
         ipAddress: clientIP,
         userAgent: request.headers.get('user-agent') || undefined,
       });
     }
 
+    // Mask recipient email: show first 2 chars + ***@domain.com
+    const rawEmail = signatureRequest.recipient_email;
+    const [localPart, domain] = rawEmail.split('@');
+    const maskedEmail = localPart.slice(0, 2) + '***@' + domain;
+
     return NextResponse.json({
       request: {
         id: signatureRequest.id,
-        recipientEmail: signatureRequest.recipient_email,
+        maskedEmail,
         recipientName: signatureRequest.recipient_name,
         message: signatureRequest.message,
         status: signatureRequest.status,
@@ -139,7 +146,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     // Get signature request by token
-    const signatureRequest = await getSignatureRequestByToken(supabaseAdmin, token);
+    const signatureRequest = await getSignatureRequestByToken(getSupabaseAdmin(), token);
 
     if (!signatureRequest) {
       return NextResponse.json(
@@ -165,7 +172,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     const body = await request.json();
-    const { signatureData, signerName } = body;
+    const { signatureData, signerName, signerEmail } = body;
 
     if (!signatureData) {
       return NextResponse.json(
@@ -174,8 +181,23 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       );
     }
 
+    if (!signerEmail) {
+      return NextResponse.json(
+        { error: 'Email is required for identity verification' },
+        { status: 400 }
+      );
+    }
+
+    // Verify signer email matches intended recipient
+    if (signerEmail.toLowerCase().trim() !== signatureRequest.recipient_email.toLowerCase().trim()) {
+      return NextResponse.json(
+        { error: 'Email does not match the intended recipient' },
+        { status: 403 }
+      );
+    }
+
     // Get document
-    const { data: document } = await supabaseAdmin
+    const { data: document } = await getSupabaseAdmin()
       .from('documents')
       .select('id, name, storage_path, annotations')
       .eq('id', signatureRequest.document_id)
@@ -186,6 +208,23 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         { error: 'Document not found' },
         { status: 404 }
       );
+    }
+
+    // FIX 4: Verify document integrity hash if one was stored
+    if (signatureRequest.document_hash) {
+      const pdfBytes = await downloadDocument(getSupabaseAdmin(), document.storage_path);
+      const currentHash = generateDocumentHash(pdfBytes, '', '');
+      // Compare only the document portion of the hash
+      const storedDocHash = signatureRequest.document_hash;
+      const verifyHash = createHash('sha256');
+      verifyHash.update(Buffer.from(pdfBytes));
+      const currentDocHash = verifyHash.digest('hex');
+      if (currentDocHash !== storedDocHash) {
+        return NextResponse.json(
+          { error: 'Document integrity check failed. The document may have been tampered with.' },
+          { status: 400 }
+        );
+      }
     }
 
     const signedAt = new Date();
@@ -218,7 +257,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       verification: verificationData,
     };
 
-    await supabaseAdmin
+    await getSupabaseAdmin()
       .from('documents')
       .update({
         annotations: [...existingAnnotations, signatureAnnotation],
@@ -228,25 +267,25 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       .eq('id', document.id);
 
     // Update signature request status
-    await updateSignatureRequestStatus(supabaseAdmin, signatureRequest.id, 'signed', {
+    await updateSignatureRequestStatus(getSupabaseAdmin(), signatureRequest.id, 'signed', {
       signedAt: signedAt.toISOString(),
     });
 
     // Log signed event with full audit trail
-    await logSignatureEvent(supabaseAdmin, signatureRequest.id, 'signed', {
+    await logSignatureEvent(getSupabaseAdmin(), signatureRequest.id, 'signed', {
       ipAddress: clientIP,
       userAgent,
       extra: verificationData,
     });
 
     // Send notification to sender
-    const { data: sender } = await supabaseAdmin
+    const { data: sender } = await getSupabaseAdmin()
       .from('profiles')
       .select('full_name')
       .eq('id', signatureRequest.sender_id)
       .single();
 
-    const { data: senderAuth } = await supabaseAdmin.auth.admin.getUserById(signatureRequest.sender_id);
+    const { data: senderAuth } = await getSupabaseAdmin().auth.admin.getUserById(signatureRequest.sender_id);
 
     if (senderAuth?.user?.email) {
       await sendSignatureCompletedEmail({

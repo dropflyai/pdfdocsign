@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { SupabaseClient } from '@supabase/supabase-js';
 
 const FREE_TIER_MONTHLY_LIMIT = 3;
 
@@ -20,7 +20,7 @@ export interface DocumentLimitCheck {
  * Check if a user has an active pro subscription (server-side).
  */
 export async function checkSubscription(
-  supabase: ReturnType<typeof createClient>,
+  supabase: SupabaseClient<any, any, any>,
   userId: string
 ): Promise<SubscriptionCheck> {
   const { data, error } = await supabase
@@ -63,7 +63,7 @@ function getNextMonthStart(): string {
  * Pro users have unlimited documents.
  */
 export async function checkDocumentLimit(
-  supabase: ReturnType<typeof createClient>,
+  supabase: SupabaseClient<any, any, any>,
   userId: string
 ): Promise<DocumentLimitCheck> {
   // First check subscription status

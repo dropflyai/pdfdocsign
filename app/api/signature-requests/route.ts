@@ -7,10 +7,12 @@ import { createSignatureRequest, listSignatureRequests, logSignatureEvent } from
 import { sendSignatureRequestEmail } from '@/lib/signature/email';
 import { getDocument } from '@/lib/storage/documents';
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+function getSupabaseAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 // GET /api/signature-requests - List user's signature requests
 export async function GET(request: NextRequest) {
@@ -31,7 +33,7 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '20');
     const offset = parseInt(searchParams.get('offset') || '0');
 
-    const { requests, total } = await listSignatureRequests(supabaseAdmin, user!.id, {
+    const { requests, total } = await listSignatureRequests(getSupabaseAdmin(), user!.id, {
       documentId,
       status: status || undefined,
       limit: Math.min(limit, 100),
@@ -81,7 +83,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify user owns the document
-    const document = await getDocument(supabaseAdmin, documentId);
+    const document = await getDocument(getSupabaseAdmin(), documentId);
     if (!document) {
       return NextResponse.json(
         { error: 'Document not found' },
@@ -97,7 +99,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create signature request
-    const signatureRequest = await createSignatureRequest(supabaseAdmin, user!.id, {
+    const signatureRequest = await createSignatureRequest(getSupabaseAdmin(), user!.id, {
       documentId,
       recipientEmail,
       recipientName,
@@ -106,7 +108,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Log the sent event
-    await logSignatureEvent(supabaseAdmin, signatureRequest.id, 'sent', {
+    await logSignatureEvent(getSupabaseAdmin(), signatureRequest.id, 'sent', {
       ipAddress: clientIP,
       userAgent: request.headers.get('user-agent') || undefined,
     });
@@ -115,7 +117,7 @@ export async function POST(request: NextRequest) {
     const signingUrl = `${process.env.NEXT_PUBLIC_APP_URL}/sign/${signatureRequest.access_token}`;
 
     // Get sender info
-    const { data: profile } = await supabaseAdmin
+    const { data: profile } = await getSupabaseAdmin()
       .from('profiles')
       .select('full_name')
       .eq('id', user!.id)
